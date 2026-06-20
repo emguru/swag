@@ -1,0 +1,38 @@
+SWAG Framework — Semantic Weighted Augmented Generation
+
+What is SWAG?
+
+SWAG (Semantic Weighted Augmented Generation) is a retrieval enhancement layer that improves RAG ranking without modifying source documents. Unlike approaches that expand or replace chunk content with synonyms, SWAG stores semantic metadata separately and uses it only for reranking and confidence scoring.
+
+Core Principles
+
+1. Original chunk text remains authoritative — never modified or appended with generated synonyms.
+2. Semantic relationships (synonyms, adjacent concepts, domain terms) are weighted metadata only.
+3. Query profiles are compared against chunk SWAG profiles to produce a relevance score.
+4. Final ranking combines vector similarity, SWAG score, and metadata boost.
+
+Architecture Components
+
+Document Ingestion: Accepts txt, md, pdf, docx. Chunks with configurable size and overlap.
+
+Baseline RAG: Embeds original chunks, stores in FAISS vector database.
+
+SWAG Profile Generation: LLM generates structured semantic profiles per chunk including primary concepts, domain terms, direct synonyms (retrieval hints only), adjacent concepts, business goals, user intents, and negative contexts.
+
+Scoring Formula:
+final_score = (vector_similarity × 0.65) + (swag_score × 0.30) + (metadata_boost × 0.05)
+
+Guardrails
+
+- Expand concepts, not isolated ambiguous keywords
+- Detect domain before generating metadata
+- Include negative contexts to prevent false matches (e.g., "Apple silicon" vs fruit)
+- Never treat generated synonyms as source facts
+
+Supported Vector Stores
+
+FAISS (default, local). Stubs provided for Qdrant, Pinecone, and Chroma — implement following the BaseVectorStore interface.
+
+LLM Providers
+
+OpenAI by default (gpt-4o-mini). MockLLMClient fallback when no API key is set. Extend llm_client.py to add Anthropic, Ollama, etc.

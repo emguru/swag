@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SWAG: Semantic Weighted Augmented Generation | automatico.llc</title>
+  <meta name="description" content="SWAG is a retrieval enhancement layer that improves RAG and CRAG ranking without modifying source documents. Learn how weighted semantic profiles deliver measurable gains over vector-only search.">
+  <link rel="canonical" href="https://automatico.llc/blog/swag-semantic-weighted-augmented-generation.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="automatico.llc">
+  <meta property="og:title" content="SWAG: Semantic Weighted Augmented Generation">
+  <meta property="og:description" content="A practical retrieval layer that augments RAG and CRAG without polluting your source documents.">
+  <meta property="og:url" content="https://automatico.llc/blog/swag-semantic-weighted-augmented-generation.html">
+  <link rel="icon" href="../assets/automatico-logo.png">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .blog-hero{padding:56px 0 32px}
+    .blog-hero h1{font-size:clamp(36px,5vw,56px);max-width:18ch}
+    .blog-meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:14px;margin:18px 0 0}
+    .blog-meta strong{color:var(--text)}
+    .blog-content{max-width:760px;padding-bottom:82px}
+    .blog-content p,.blog-content li{color:var(--muted);margin:0 0 16px}
+    .blog-content h2{font-size:clamp(26px,3.5vw,36px);margin:48px 0 14px}
+    .blog-content h3{font-size:22px;margin:32px 0 10px;color:var(--text)}
+    .blog-content ul,.blog-content ol{padding-left:1.35rem;margin:0 0 20px}
+    .blog-content li{margin-bottom:10px}
+    .blog-content a{color:var(--cyan)}
+    .blog-content code{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:.92em;background:var(--panel-2);padding:2px 7px;border-radius:8px;
+      color:var(--text);
+    }
+    .blog-content pre{
+      background:#0f1724;color:#e8eef5;padding:20px;border-radius:20px;
+      overflow-x:auto;font-size:14px;line-height:1.55;margin:0 0 24px;
+    }
+    .blog-content pre code{background:transparent;padding:0;color:inherit}
+    .metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}
+    .metric-grid .stat{background:white}
+    .metric-grid .stat strong{color:var(--violet)}
+    .metric-delta{color:var(--green);font-weight:800;font-size:13px;margin-top:4px}
+    .callout{
+      padding:22px 24px;border-radius:22px;margin:28px 0;
+      background:linear-gradient(135deg,rgba(0,184,217,.08),rgba(123,97,255,.10));
+      border:1px solid var(--line);
+    }
+    .callout p:last-child{margin-bottom:0}
+    .callout strong{color:var(--text)}
+    .compare-table{width:100%;border-collapse:collapse;font-size:15px;margin:24px 0;background:white;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+    .compare-table th,.compare-table td{border-bottom:1px solid var(--line);padding:14px 16px;text-align:left;vertical-align:top}
+    .compare-table th{background:var(--panel-2);color:var(--text)}
+    .compare-table tr:last-child td{border-bottom:0}
+    .compare-table td{color:var(--muted)}
+    .flow-diagram{
+      padding:24px;border-radius:24px;background:white;border:1px solid var(--line);
+      box-shadow:var(--shadow);margin:28px 0;font-size:14px;line-height:1.7;color:var(--muted);
+    }
+    .flow-diagram .lane{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+    .flow-diagram .lane:last-child{border-bottom:0}
+    .flow-diagram .label{font-weight:800;color:var(--cyan);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+    .tag-row{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 24px}
+    .tag{padding:6px 12px;border-radius:999px;background:rgba(0,184,217,.10);color:var(--cyan);font-size:12px;font-weight:700}
+    @media (max-width:900px){.metric-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="../index.html"><img src="../assets/automatico-logo.png" alt="automatico.llc"></a>
+    <nav class="nav-desktop" aria-label="Main navigation">
+      <a href="../index.html">Home</a>
+      <a href="../services.html">Services</a>
+      <a href="../about.html">About</a>
+      <a href="../builds.html">Builds</a>
+      <a class="btn" href="../about.html#contact">Contact Us</a>
+    </nav>
+    <div class="nav-phone">
+      <button type="button" class="nav-phone-btn" id="nav-phone-btn" aria-expanded="false" aria-controls="nav-phone-menu">Menu</button>
+      <div class="nav-phone-menu" id="nav-phone-menu" hidden>
+        <a href="../index.html">Home</a>
+        <a href="../services.html">Services</a>
+        <a href="../about.html">About</a>
+        <a href="../builds.html">Builds</a>
+        <a class="btn" href="mailto:sales@automatico.llc">Contact Us</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="blog-hero">
+    <div class="container blog-content">
+      <div class="eyebrow">Operational Intelligence &amp; Automation</div>
+      <h1>SWAG: Semantic Weighted Augmented Generation</h1>
+      <p class="lead">A retrieval enhancement layer that improves RAG and CRAG ranking without modifying your source documents — or treating generated synonyms as facts.</p>
+      <div class="blog-meta">
+        <span><strong>Published:</strong> June 2026</span>
+        <span><strong>Category:</strong> Knowledge Systems</span>
+        <span><strong>Read time:</strong> 12 min</span>
+      </div>
+      <div class="tag-row">
+        <span class="tag">RAG</span>
+        <span class="tag">CRAG</span>
+        <span class="tag">Retrieval</span>
+        <span class="tag">Operational AI</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <div class="container blog-content">
+
+      <p>Most businesses deploying retrieval-augmented generation (RAG) hit the same wall: vector search returns <em>similar</em> text, not necessarily the <em>right</em> text. A query about "three-way matching in accounts payable" may rank a general AP overview above the paragraph that actually explains the matching process — because both chunks share vocabulary and sit close together in embedding space.</p>
+
+      <p><strong>SWAG — Semantic Weighted Augmented Generation</strong> — is a lightweight augmentation layer we built to address that gap. It does not replace your documents, rewrite chunks with synonyms, or trigger corrective web searches. Instead, it generates structured semantic metadata for each chunk, scores query-to-chunk alignment using weighted term relationships, and reranks vector search results before generation.</p>
+
+      <div class="callout">
+        <p><strong>Design principle:</strong> Original chunk text remains authoritative. SWAG metadata is stored separately and used exclusively for reranking and confidence scoring. Synonyms, adjacent concepts, and domain terms are contextual hints — never source-of-truth content.</p>
+      </div>
+
+      <h2>The problem with vector-only RAG</h2>
+
+      <p>Traditional RAG pipelines follow a straightforward path: chunk documents, embed the raw text, store vectors, retrieve top-K by cosine similarity, pass chunks to an LLM. That works until:</p>
+
+      <ul class="checks">
+        <li>Multiple chunks share overlapping vocabulary but answer different questions</li>
+        <li>Domain-specific terms collide across unrelated contexts ("Apple silicon" vs. orchard management)</li>
+        <li>Users ask intent-driven questions that do not lexically match the source paragraph</li>
+        <li>Teams inject synonym expansion into chunk text — improving recall but polluting the knowledge base</li>
+      </ul>
+
+      <p>CRAG (Corrective RAG) addresses retrieval failures <em>after</em> the fact by evaluating confidence and triggering fallback retrieval or web search. That is valuable — but it is reactive. SWAG is complementary: it improves the initial candidate ranking so fewer queries ever reach the correction step.</p>
+
+      <h2>What SWAG adds</h2>
+
+      <p>During ingestion, SWAG generates a structured semantic profile for each chunk:</p>
+
+<pre><code>{
+  "primary_concepts": ["three-way matching", "invoice reconciliation"],
+  "domain_terms": ["accounts payable", "purchase order", "goods receipt"],
+  "direct_synonyms": ["PO-GR-IR matching"],
+  "adjacent_concepts": ["exception workflows", "straight-through processing"],
+  "business_goals": ["reduce manual AP review", "accelerate payment cycles"],
+  "user_intents": ["how does three-way matching work"],
+  "negative_contexts": ["inventory forecasting", "general ledger reporting"],
+  "confidence": 0.91,
+  "weighted_terms": [
+    {
+      "term": "vendor invoice matching",
+      "category": "adjacent_concept",
+      "weight": 0.86,
+      "reason": "Closely related to accounts payable reconciliation"
+    }
+  ]
+}</code></pre>
+
+      <p>Every term carries a weight from 0.0 to 1.0 reflecting its contextual relevance to <em>that specific chunk</em>. At query time, SWAG generates a matching profile for the user's question and scores alignment across weighted categories — with penalties for negative-context matches and domain mismatches.</p>
+
+      <h3>Guardrails against semantic pollution</h3>
+
+      <p>SWAG was designed with explicit protections because naive synonym expansion is how RAG systems quietly degrade:</p>
+
+      <ul>
+        <li><strong>No isolated keyword expansion.</strong> Ambiguous single words are not expanded without full chunk context.</li>
+        <li><strong>Concept expansion, not keyword stuffing.</strong> Multi-word phrases and domain-scoped concepts only.</li>
+        <li><strong>Domain detection first.</strong> Each profile includes a detected domain before terms are assigned.</li>
+        <li><strong>Negative contexts.</strong> Explicit terms that would cause false-positive matches in other domains.</li>
+        <li><strong>Synonyms are retrieval hints only.</strong> Never appended to chunk text. Never treated as facts during generation.</li>
+      </ul>
+
+      <h2>How SWAG fits into RAG and CRAG</h2>
+
+      <div class="flow-diagram">
+        <div class="lane"><div class="label">Traditional RAG</div><div>Embed query → vector search → top-K → generate answer</div></div>
+        <div class="lane"><div class="label">SWAG + RAG</div><div>Embed query → vector search → <strong>SWAG rerank</strong> → top-K → generate answer</div></div>
+        <div class="lane"><div class="label">CRAG alone</div><div>Retrieve → evaluate confidence → correct if low (web/re-retrieve) → generate</div></div>
+        <div class="lane"><div class="label">SWAG + CRAG</div><div>Retrieve → <strong>SWAG rerank</strong> → evaluate confidence → correct if still low → generate</div></div>
+      </div>
+
+      <p>In a combined deployment, SWAG sits between vector retrieval and the CRAG confidence evaluator. Better initial ranking means higher confidence scores, fewer corrective retrieval cycles, and lower latency and cost from unnecessary fallback searches.</p>
+
+      <h3>Scoring formula</h3>
+
+      <p>Final ranking combines three signals with configurable weights:</p>
+
+<pre><code>final_score = (vector_similarity × 0.65)
+            + (swag_score       × 0.30)
+            + (metadata_boost   × 0.05)</code></pre>
+
+      <p>The vector component preserves the strength of embedding search. The SWAG component rewards semantic profile alignment across weighted categories (primary concepts, user intents, domain terms, adjacent concepts, and direct synonyms). The metadata boost captures domain alignment and structural signals like source filename relevance.</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Weight multiplier</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Primary concept</td><td>1.00×</td><td>Core topic alignment</td></tr>
+          <tr><td>User intent</td><td>0.90×</td><td>Question the chunk answers</td></tr>
+          <tr><td>Domain term</td><td>0.85×</td><td>Specialized vocabulary match</td></tr>
+          <tr><td>Business goal</td><td>0.75×</td><td>Operational objective fit</td></tr>
+          <tr><td>Direct synonym</td><td>0.70×</td><td>Retrieval hint only — not a fact</td></tr>
+          <tr><td>Adjacent concept</td><td>0.60×</td><td>Related but unstated context</td></tr>
+          <tr><td>Negative context</td><td>Penalty</td><td>Reduces score on false-match terms</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Baseline improvement numbers</h2>
+
+      <p>We benchmarked SWAG against vector-only retrieval on an 8-chunk corpus spanning accounts payable operations documentation and SWAG framework reference material. Eight labeled queries were evaluated with ground-truth relevance judgments (correct chunk identified by content match).</p>
+
+      <div class="metric-grid">
+        <div class="stat">
+          <strong>62.5%</strong>
+          <span>SWAG Precision@1</span>
+          <div class="metric-delta">+12.5 pp vs baseline</div>
+        </div>
+        <div class="stat">
+          <strong>72.9%</strong>
+          <span>SWAG MRR</span>
+          <div class="metric-delta">+6.2 pp vs baseline</div>
+        </div>
+        <div class="stat">
+          <strong>50%</strong>
+          <span>Queries reranked</span>
+          <div class="metric-delta">4 of 8 changed order</div>
+        </div>
+      </div>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Baseline RAG</th>
+            <th>SWAG + RAG</th>
+            <th>Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Precision@1</td>
+            <td>50.0%</td>
+            <td>62.5%</td>
+            <td><strong style="color:var(--green)">+12.5 pp (+25% relative)</strong></td>
+          </tr>
+          <tr>
+            <td>Precision@3</td>
+            <td>87.5%</td>
+            <td>87.5%</td>
+            <td>No change — recall already strong</td>
+          </tr>
+          <tr>
+            <td>Precision@5</td>
+            <td>87.5%</td>
+            <td>87.5%</td>
+            <td>No change</td>
+          </tr>
+          <tr>
+            <td>Mean Reciprocal Rank</td>
+            <td>66.7%</td>
+            <td>72.9%</td>
+            <td><strong style="color:var(--green)">+6.2 pp (+9.3% relative)</strong></td>
+          </tr>
+          <tr>
+            <td>Top-1 result changed</td>
+            <td>—</td>
+            <td>12.5% of queries</td>
+            <td>Correct chunk promoted where vector alone failed</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Example: where SWAG corrected a miss</h3>
+
+      <p>Query: <em>"How does three-way matching work in accounts payable?"</em></p>
+
+      <p>Baseline RAG ranked the AP overview chunk first (vector similarity 0.732). The chunk that actually explains the three-way matching process ranked second (0.715) — close in embedding space, wrong in operational intent.</p>
+
+      <p>SWAG reranking promoted the correct chunk to rank 1 by scoring semantic alignment between the query profile and the chunk's weighted term profile (user intents, primary concepts, domain terms). The overview chunk dropped to rank 2. Same corpus. Same embeddings. Better answer context.</p>
+
+      <div class="callout">
+        <p><strong>What these numbers mean in practice:</strong> SWAG's largest gains appear at Precision@1 — the chunk your LLM actually reads first. For operational knowledge systems (SOPs, policy libraries, AP workflows, customer playbooks), that single ranking correction often determines whether the system gives a precise answer or a plausible-sounding generalization.</p>
+      </div>
+
+      <h2>Architecture at a glance</h2>
+
+      <p>SWAG is designed local-first and modular — consistent with how we deploy systems for clients who need cloud, on-prem, or hybrid options:</p>
+
+      <ul>
+        <li><strong>Ingestion:</strong> .txt, .md, .pdf, .docx with configurable chunk size and overlap</li>
+        <li><strong>Embeddings:</strong> sentence-transformers (local) or OpenAI — computed on original chunk text only</li>
+        <li><strong>Vector store:</strong> FAISS by default; modular interface for Qdrant, Pinecone, Chroma</li>
+        <li><strong>SWAG profiles:</strong> LLM-generated at ingest, stored separately from chunk text</li>
+        <li><strong>Query path:</strong> vector search → SWAG rerank → optional CRAG confidence gate → generation</li>
+      </ul>
+
+      <h2>When SWAG earns its place</h2>
+
+      <p>SWAG is not a replacement for RAG or CRAG. It is an augmentation layer best suited when:</p>
+
+      <ul>
+        <li>Your knowledge base has dense, overlapping content in the same domain</li>
+        <li>Users ask intent-driven questions that do not mirror document phrasing</li>
+        <li>You need disambiguation guardrails without polluting source documents</li>
+        <li>You run CRAG and want fewer corrective retrieval cycles</li>
+        <li>Operational accuracy at rank 1 matters more than broad recall at rank 5</li>
+      </ul>
+
+      <p>The framework is open and deployable today: Python 3.11+, FAISS, FastAPI demo API, and configurable scoring weights. For production deployments with full LLM-generated profiles (vs. local heuristic fallback), expect further gains on Precision@1 and MRR — particularly on ambiguous, domain-heavy query sets.</p>
+
+      <h2>What we are building toward</h2>
+
+      <p>At automatico.llc, we treat retrieval quality the same way we treat workflow design: start with the operational bottleneck, measure what changes, and expand from there. SWAG is one layer in that stack — rules and structure first, deeper models where they earn their place.</p>
+
+      <p>If your team is running RAG or CRAG against operational documentation and getting "close enough" answers that are not quite right, SWAG is worth evaluating on your corpus before adding more corrective complexity downstream.</p>
+
+      <div class="cta" style="margin-top:48px">
+        <div>
+          <div class="eyebrow">Next step</div>
+          <h2 style="margin:8px 0 10px">Discuss a knowledge workflow.</h2>
+          <p style="margin:0;color:var(--muted)">We can benchmark SWAG against your documents and show you the ranking delta on your highest-value queries.</p>
+        </div>
+        <a class="btn" href="../about.html#contact">Contact Us</a>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div>© 2026 automatico.llc — Operational Intelligence &amp; Automation</div>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="../services.html">Services</a>
+      <a href="../about.html">About</a>
+      <a href="mailto:sales@automatico.llc">sales@automatico.llc</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const btn = document.getElementById('nav-phone-btn');
+  const menu = document.getElementById('nav-phone-menu');
+  if (btn && menu) {
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!open));
+      menu.hidden = open;
+    });
+  }
+</script>
+</body>
+</html>
