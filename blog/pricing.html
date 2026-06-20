@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SWAG Pricing | automatico.llc</title>
+  <meta name="description" content="SWAG commercial licensing and benchmark pilot pricing. Source-visible retrieval enhancement for RAG and CRAG — priced against measurable rank-1 improvement.">
+  <link rel="canonical" href="https://automatico.llc/blog/pricing.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="automatico.llc">
+  <meta property="og:title" content="SWAG Pricing">
+  <meta property="og:description" content="Benchmark pilot and production licensing for Semantic Weighted Augmented Generation.">
+  <meta property="og:url" content="https://automatico.llc/blog/pricing.html">
+  <link rel="icon" href="../assets/automatico-logo.png">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .page-hero{padding:56px 0 36px}
+    .page-hero h1{font-size:clamp(36px,5vw,56px);max-width:16ch}
+    .page-wrap{max-width:1160px;margin:0 auto;padding-bottom:82px}
+    .page-lead{font-size:clamp(18px,2vw,22px);color:#43556a;max-width:62ch;margin:16px 0 0}
+    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:36px 0}
+    .price-card{
+      padding:32px;border-radius:28px;background:white;
+      border:1px solid var(--line);box-shadow:var(--shadow);
+      display:flex;flex-direction:column;
+    }
+    .price-card.featured{
+      border-color:rgba(0,184,217,.45);
+      background:linear-gradient(180deg,#ffffff 0%,rgba(0,184,217,.04) 100%);
+    }
+    .price-tier{color:var(--cyan);font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:12px;margin:0 0 8px}
+    .price-amount{font-size:clamp(28px,3vw,36px);font-weight:800;letter-spacing:-.04em;margin:0 0 6px;color:var(--text)}
+    .price-period{color:var(--muted);font-size:14px;margin:0 0 18px}
+    .price-card p{color:var(--muted);font-size:15px;margin:0 0 18px}
+    .price-card ul{list-style:none;padding:0;margin:0 0 24px;flex:1}
+    .price-card li{padding-left:26px;position:relative;color:var(--muted);font-size:14px;margin-bottom:10px}
+    .price-card li:before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:900}
+    .price-card .btn{width:100%;justify-content:center}
+    .pilot-banner{
+      padding:36px;border-radius:32px;margin:36px 0;
+      background:linear-gradient(135deg,rgba(0,184,217,.10),rgba(123,97,255,.12));
+      border:1px solid var(--line);
+      display:grid;grid-template-columns:1.2fr .8fr;gap:32px;align-items:center;
+    }
+    .pilot-banner h2{margin:8px 0 12px;font-size:clamp(26px,3vw,34px)}
+    .pilot-banner p{color:var(--muted);margin:0 0 16px}
+    .pilot-price{font-size:42px;font-weight:800;letter-spacing:-.04em;color:var(--violet)}
+    .pilot-price span{display:block;font-size:14px;font-weight:600;color:var(--muted);margin-top:6px}
+    .section-block{padding:48px 0 0}
+    .section-block h2{font-size:clamp(28px,3.5vw,40px);margin:0 0 12px}
+    .section-block > p{color:var(--muted);max-width:62ch;margin:0 0 24px}
+    .compare-table{width:100%;border-collapse:collapse;font-size:15px;margin:24px 0;background:white;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+    .compare-table th,.compare-table td{border-bottom:1px solid var(--line);padding:14px 16px;text-align:left;vertical-align:top}
+    .compare-table th{background:var(--panel-2);color:var(--text)}
+    .compare-table tr:last-child td{border-bottom:0}
+    .compare-table td{color:var(--muted)}
+    .faq{display:grid;gap:14px;margin-top:24px}
+    .faq-item{padding:22px 24px;border-radius:22px;background:white;border:1px solid var(--line)}
+    .faq-item h3{margin:0 0 8px;font-size:18px}
+    .faq-item p{margin:0;color:var(--muted);font-size:15px}
+    .free-tier{
+      padding:28px;border-radius:24px;background:var(--panel-2);
+      border:1px solid var(--line);margin-top:36px;
+    }
+    .free-tier h3{margin:0 0 10px}
+    .free-tier p{margin:0;color:var(--muted)}
+    .metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}
+    .metric-row .stat{background:white}
+    .metric-row .stat strong{color:var(--green)}
+    @media (max-width:900px){
+      .pricing-grid,.pilot-banner,.metric-row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="../index.html"><img src="../assets/automatico-logo.png" alt="automatico.llc"></a>
+    <nav class="nav-desktop" aria-label="Main navigation">
+      <a href="../index.html">Home</a>
+      <a href="../services.html">Services</a>
+      <a href="../about.html">About</a>
+      <a href="../builds.html">Builds</a>
+      <a class="btn" href="../about.html#contact">Contact Us</a>
+    </nav>
+    <div class="nav-phone">
+      <button type="button" class="nav-phone-btn" id="nav-phone-btn" aria-expanded="false" aria-controls="nav-phone-menu">Menu</button>
+      <div class="nav-phone-menu" id="nav-phone-menu" hidden>
+        <a href="../index.html">Home</a>
+        <a href="../services.html">Services</a>
+        <a href="../about.html">About</a>
+        <a href="../builds.html">Builds</a>
+        <a class="btn" href="mailto:sales@automatico.llc">Contact Us</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="page-hero">
+    <div class="container page-wrap" style="padding-bottom:0">
+      <div class="eyebrow">SWAG — Semantic Weighted Augmented Generation</div>
+      <h1>Pricing built on measurable retrieval lift.</h1>
+      <p class="page-lead">Evaluate free under our source-visible license. Prove rank-1 improvement on your corpus with a benchmark pilot. Scale to production when the numbers justify it.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:24px">
+    <div class="container page-wrap">
+
+      <div class="metric-row">
+        <div class="stat"><strong>+12.5 pp</strong><span>Precision@1 vs vector-only (benchmark corpus)</span></div>
+        <div class="stat"><strong>+6.2 pp</strong><span>Mean reciprocal rank improvement</span></div>
+        <div class="stat"><strong>50%</strong><span>Queries reranked on eval set</span></div>
+      </div>
+
+      <div class="pilot-banner">
+        <div>
+          <div class="eyebrow">Recommended first step</div>
+          <h2>Benchmark Pilot</h2>
+          <p>We ingest a sample of your documents, run baseline RAG against SWAG-reranked retrieval, and deliver a written report with Precision@1, MRR, and rank-change analysis on your query set.</p>
+          <ul class="checks">
+            <li>2–4 week engagement</li>
+            <li>Co-developed or client-provided eval queries</li>
+            <li>Integration fit assessment (FAISS, Qdrant, existing stack)</li>
+            <li>Pilot fee creditable toward Year 1 license (90 days)</li>
+          </ul>
+        </div>
+        <div style="text-align:center">
+          <div class="pilot-price">$5k – $15k<span>one-time · scoped by corpus size</span></div>
+          <a class="btn" href="mailto:sales@automatico.llc?subject=SWAG%20Benchmark%20Pilot" style="margin-top:20px">Request a Pilot</a>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="eyebrow">Production licensing</div>
+        <h2>Annual plans for operational deployment.</h2>
+        <p>Production use, commercial systems, and deployments above LICENSE thresholds require a paid agreement. Pricing typically reflects <strong>5–15% of the annual cost of bad retrieval</strong> — wrong answers, CRAG fallbacks, and expert review time.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <article class="price-card">
+          <div class="price-tier">Startup</div>
+          <div class="price-amount">$3k – $8k</div>
+          <div class="price-period">per year</div>
+          <p>For smaller teams proving SWAG in production internally.</p>
+          <ul>
+            <li>Under 50 employees</li>
+            <li>Internal knowledge / RAG use</li>
+            <li>Single environment</li>
+            <li>Email support</li>
+            <li>Standard documentation &amp; updates</li>
+          </ul>
+          <a class="btn secondary" href="mailto:sales@automatico.llc?subject=SWAG%20Startup%20License">Get a Quote</a>
+        </article>
+
+        <article class="price-card featured">
+          <div class="price-tier">Growth</div>
+          <div class="price-amount">$15k – $40k</div>
+          <div class="price-period">per year</div>
+          <p>Most common tier for operational systems at scale.</p>
+          <ul>
+            <li>50–500 employees</li>
+            <li>Production RAG / CRAG augmentation</li>
+            <li>Multiple teams or environments</li>
+            <li>Scoring weight tuning (one round)</li>
+            <li>Integration guidance</li>
+            <li>Business-hours support</li>
+          </ul>
+          <a class="btn" href="mailto:sales@automatico.llc?subject=SWAG%20Growth%20License">Get a Quote</a>
+        </article>
+
+        <article class="price-card">
+          <div class="price-tier">Enterprise</div>
+          <div class="price-amount">$50k+</div>
+          <div class="price-period">per year · custom scope</div>
+          <p>Regulated, multi-region, or high-volume deployments.</p>
+          <ul>
+            <li>500+ employees or regulated industry</li>
+            <li>SLA &amp; priority support</li>
+            <li>Custom guardrails &amp; domain profiles</li>
+            <li>Security review support</li>
+            <li>Eval harness &amp; quarterly review</li>
+            <li>Dedicated onboarding</li>
+          </ul>
+          <a class="btn secondary" href="mailto:sales@automatico.llc?subject=SWAG%20Enterprise%20License">Contact Sales</a>
+        </article>
+      </div>
+
+      <div class="section-block">
+        <h2>OEM &amp; platform licensing</h2>
+        <p>For vendors embedding SWAG in a commercial product, SaaS offering, or managed service.</p>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Indicative range</th>
+              <th>Best for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>OEM / redistribution</td>
+              <td>$25k – $100k+ upfront + annual maintenance</td>
+              <td>Product vendors, platform integrators</td>
+            </tr>
+            <tr>
+              <td>Usage — reranked queries</td>
+              <td>$200 – $800 / 1M queries</td>
+              <td>High-volume SaaS with tiered pricing</td>
+            </tr>
+            <tr>
+              <td>Usage — indexed chunks</td>
+              <td>$0.001 – $0.01 / chunk / month</td>
+              <td>Hosted managed index offerings</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="free-tier">
+        <h3>Free evaluation — no purchase required</h3>
+        <p>Under our <a href="https://github.com/emguru/swag/blob/main/LICENSE">source-visible license</a>, you may clone, study, and run SWAG locally for learning, research, and internal non-commercial evaluation. Commercial use, redistribution, and production systems above license thresholds require a paid agreement.</p>
+      </div>
+
+      <div class="section-block">
+        <h2>FAQ</h2>
+        <div class="faq">
+          <article class="faq-item">
+            <h3>Why isn't SWAG open source?</h3>
+            <p>The scoring layer and semantic profile approach are the product. Source-visible licensing lets you inspect what you deploy while protecting commercial and redistribution rights.</p>
+          </article>
+          <article class="faq-item">
+            <h3>How do you justify the price?</h3>
+            <p>Rank-1 retrieval quality directly affects answer accuracy and downstream CRAG costs. On our benchmark corpus, SWAG improved Precision@1 by 25% relative. Your pilot quantifies the same delta on your documents.</p>
+          </article>
+          <article class="faq-item">
+            <h3>Can we skip the pilot?</h3>
+            <p>Yes, if you have a labeled evaluation set and existing RAG metrics. Most teams use the pilot for internal buy-in and tuning baseline.</p>
+          </article>
+          <article class="faq-item">
+            <h3>Does SWAG replace our vector database or LLM?</h3>
+            <p>No. SWAG is a reranking layer that sits between vector retrieval and generation — compatible with FAISS, Qdrant, Chroma, Pinecone, and existing CRAG pipelines.</p>
+          </article>
+          <article class="faq-item">
+            <h3>What should we send to get a quote?</h3>
+            <p>Company size, industry, deployment model (on-prem / cloud / SaaS), approximate corpus size, monthly query volume, and whether you need OEM or redistribution rights.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="cta" style="margin-top:48px">
+        <div>
+          <div class="eyebrow">Ready to benchmark?</div>
+          <h2 style="margin:8px 0 10px">See SWAG on your documents.</h2>
+          <p style="margin:0;color:var(--muted)">We respond within 2 business days with a scoped pilot or license proposal.</p>
+        </div>
+        <a class="btn" href="mailto:sales@automatico.llc?subject=SWAG%20Pricing%20Inquiry">sales@automatico.llc</a>
+      </div>
+
+      <p style="margin-top:32px;font-size:14px;color:var(--muted);text-align:center">
+        <a href="swag-semantic-weighted-augmented-generation.html">Read the SWAG technical overview →</a>
+      </p>
+
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div>© 2026 automatico.llc — Operational Intelligence &amp; Automation</div>
+    <div class="footer-links">
+      <a href="../index.html">Home</a>
+      <a href="swag-semantic-weighted-augmented-generation.html">SWAG Overview</a>
+      <a href="mailto:sales@automatico.llc">sales@automatico.llc</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const btn = document.getElementById('nav-phone-btn');
+  const menu = document.getElementById('nav-phone-menu');
+  if (btn && menu) {
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!open));
+      menu.hidden = open;
+    });
+  }
+</script>
+</body>
+</html>

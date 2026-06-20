@@ -267,4 +267,6 @@ You may view, evaluate, and use the Software for personal learning, research, an
 internal non-commercial purposes. Commercial use, redistribution, and production
 deployment require a [commercial license](COMMERCIAL-LICENSE.md).
 
-See [LICENSE](LICENSE) for full terms. Inquiries: sales@automatico.llc
+See [LICENSE](LICENSE) for full terms. **Pricing:** [PRICING.md](PRICING.md) · [Pricing page](blog/pricing.html)
+
+Inquiries: sales@automatico.llc

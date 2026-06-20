@@ -25,7 +25,8 @@ Terms are negotiated per deployment. Common elements:
 ## Contact
 
 **Email:** sales@automatico.llc  
-**Web:** https://automatico.llc
+**Web:** https://automatico.llc  
+**Pricing:** [PRICING.md](PRICING.md) · [Pricing page](blog/pricing.html)
 
 Include a brief description of your use case, deployment model (on-prem, cloud, SaaS),
 and expected scale.
