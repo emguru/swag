@@ -1,0 +1,132 @@
+SWAG Framework — Proprietary License
+Semantic Weighted Augmented Generation
+
+Copyright (c) 2026 emguru / automatico.llc. All Rights Reserved.
+
+This software and associated documentation (the "Software") are proprietary
+and confidential. Unauthorized use, reproduction, or distribution is prohibited
+except as expressly permitted below.
+
+IMPORTANT: This is NOT an open-source license. Source code is made visible
+for transparency and permitted use only. All rights not expressly granted
+are reserved by the copyright holder.
+
+
+1. DEFINITIONS
+
+   "Software" means the SWAG framework source code, documentation, schemas,
+   configuration, and related materials in this repository.
+
+   "You" means the individual or legal entity accessing or using the Software.
+
+   "Commercial Use" means any use of the Software (or derivative works) in
+   connection with a product or service that is sold, licensed, hosted for
+   third parties, or used to generate revenue, including internal tools that
+   directly support revenue-generating operations at an organization with
+   more than fifty (50) employees or more than five million U.S. dollars
+   (USD $5,000,000) in annual gross revenue.
+
+   "Derivative Work" means any modification, adaptation, translation, or
+   work based upon the Software, including integrations that incorporate
+   substantial portions of the Software's source code.
+
+
+2. PERMITTED USE (LIMITED GRANT)
+
+   Subject to the restrictions in Section 3, the copyright holder grants You
+   a limited, non-exclusive, non-transferable, revocable license to:
+
+   (a) View and study the source code;
+
+   (b) Use and run the Software for personal learning, research, evaluation,
+       and internal non-Commercial Use;
+
+   (c) Modify the Software solely for Your own internal non-Commercial Use,
+       provided You do not distribute modified versions;
+
+   (d) Contribute bug fixes or improvements back to the official repository
+       via pull/merge requests, with ownership of contributions assigned to
+       the copyright holder unless otherwise agreed in writing.
+
+
+3. RESTRICTIONS
+
+   Without prior written permission from the copyright holder, You may NOT:
+
+   (a) Use the Software for Commercial Use;
+
+   (b) Redistribute, publish, sublicense, sell, lease, or otherwise make the
+       Software or any Derivative Work available to any third party;
+
+   (c) Remove, alter, or obscure copyright, trademark, or license notices;
+
+   (d) Use the name "SWAG", "Semantic Weighted Augmented Generation", or
+       associated branding in a manner that implies endorsement, origin, or
+       affiliation without written authorization;
+
+   (e) Use the Software in any manner that violates applicable law.
+
+
+4. COMMERCIAL LICENSING
+
+   Commercial Use, production deployment, redistribution, OEM embedding,
+   SaaS offerings, and white-label implementations require a separate
+   written commercial license.
+
+   Contact: sales@automatico.llc
+
+
+5. INTELLECTUAL PROPERTY
+
+   The copyright holder retains all right, title, and interest in and to the
+   Software, including all intellectual property rights. This license does
+   not grant any patent rights except as needed to exercise the limited
+   rights expressly granted herein.
+
+   Third parties may not reimplement similar functionality under a different
+   name using this Software's source code as a basis without violating
+   Section 3. Independent clean-room implementations are outside the scope
+   of this license but may be subject to other intellectual property rights.
+
+
+6. CONTRIBUTIONS
+
+   By submitting contributions to the official repository, You grant the
+   copyright holder a perpetual, worldwide, royalty-free license to use,
+   modify, and distribute those contributions as part of the Software.
+
+
+7. TERMINATION
+
+   This license terminates automatically if You breach any term. Upon
+   termination, You must cease all use and destroy copies of the Software
+   in Your possession. Sections 3, 5, 8, and 9 survive termination.
+
+
+8. DISCLAIMER OF WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THE ENTIRE RISK
+   AS TO QUALITY AND PERFORMANCE IS WITH YOU.
+
+
+9. LIMITATION OF LIABILITY
+
+   IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES,
+   OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
+   ARISING FROM OR IN CONNECTION WITH THE SOFTWARE OR THE USE OF THE SOFTWARE,
+   EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. IN JURISDICTIONS THAT
+   DO NOT ALLOW CERTAIN LIMITATIONS, LIABILITY IS LIMITED TO THE MAXIMUM
+   EXTENT PERMITTED BY LAW.
+
+
+10. GOVERNING LAW
+
+    This license is governed by the laws of the State of Texas, United States,
+    without regard to conflict-of-law principles.
+
+
+For commercial licensing inquiries:
+  sales@automatico.llc
+  https://automatico.llc

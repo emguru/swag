@@ -261,4 +261,10 @@ TOP_K=10
 
 ## License
 
-MIT
+**Proprietary — source-visible, limited grant.** This is not open source.
+
+You may view, evaluate, and use the Software for personal learning, research, and
+internal non-commercial purposes. Commercial use, redistribution, and production
+deployment require a [commercial license](COMMERCIAL-LICENSE.md).
+
+See [LICENSE](LICENSE) for full terms. Inquiries: sales@automatico.llc
