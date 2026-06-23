@@ -1,0 +1,47 @@
+# Local / on-prem: FAISS + sentence-transformers (default)
+services:
+  swag:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      VECTOR_STORE_BACKEND: faiss
+      EMBEDDING_PROVIDER: sentence-transformers
+      SWAG_PROFILE_MODE: heuristic
+      DATA_DIR: /data
+      INDEXES_DIR: /indexes
+    volumes:
+      - ./data:/data
+      - ./indexes:/indexes
+
+# Cloud / scaled: Qdrant + OpenAI embeddings
+  swag-qdrant:
+    profiles: ["qdrant"]
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      VECTOR_STORE_BACKEND: qdrant
+      QDRANT_URL: http://qdrant:6333
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
+      SWAG_PROFILE_MODE: ${SWAG_PROFILE_MODE:-heuristic}
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    depends_on:
+      - qdrant
+
+  qdrant:
+    profiles: ["qdrant"]
+    image: qdrant/qdrant:v1.12.5
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  qdrant_data:

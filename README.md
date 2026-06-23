@@ -2,12 +2,17 @@
 
 A Python framework that embeds a **SWAG retrieval enhancement layer** into a traditional RAG pipeline. SWAG improves retrieval ranking by scoring whether a user query aligns with the **contextual semantic weight profile** of each chunk — without modifying the original document text.
 
+**v0.2** ports the production-hardened reranker from `kube_rag_langg` (noise gating, chunk-kind multipliers, heuristic profiles, grounding, adaptive blend). Deploy **locally, on-prem, or cloud** — see [docs/DEPLOY.md](docs/DEPLOY.md).
+
+**Docs:** [Build & Usage](docs/BUILD_AND_USAGE.md) · [Architecture diagram](docs/architecture-diagram.html) · [Deploy modes](docs/DEPLOY.md)
+
 ## What is SWAG?
 
 SWAG generates structured semantic metadata for each document chunk:
 
 ```json
 {
+  "detected_domain": "finance",
   "primary_concepts": [],
   "domain_terms": [],
   "direct_synonyms": [],
@@ -15,7 +20,8 @@ SWAG generates structured semantic metadata for each document chunk:
   "business_goals": [],
   "user_intents": [],
   "negative_contexts": [],
-  "confidence": 0.0
+  "confidence": 0.0,
+  "weighted_terms": []
 }
 ```
 
@@ -41,36 +47,20 @@ CRAG:  Retrieve → Evaluate confidence → Correct if low → Generate
 SWAG:  Retrieve → SWAG rerank → Generate (original chunks unchanged)
 ```
 
+In combined deployments (e.g. kube_rag_langg), SWAG sits **before** the CRAG confidence evaluator — better initial ranking means fewer corrective cycles.
+
 ## Architecture
 
-```
-┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
-│  Documents  │────▶│   Chunking   │────▶│  Original Chunks │
-│ (.txt/.md/  │     │              │     │  (authoritative) │
-│  .pdf/.docx)│     └──────────────┘     └────────┬────────┘
-└─────────────┘                                   │
-                    ┌──────────────────────────────┼──────────────────┐
-                    ▼                              ▼                  ▼
-            ┌──────────────┐              ┌──────────────┐   ┌──────────────┐
-            │  Embeddings  │              │ SWAG Profile │   │ Vector Store │
-            │ (chunk text) │              │  Generation  │   │   (FAISS)    │
-            └──────┬───────┘              └──────┬───────┘   └──────┬───────┘
-                   │                             │                  │
-                   └──────────────┬──────────────┘                  │
-                                  ▼                                 │
-                         ┌────────────────┐                         │
-                         │  Index Storage │◀────────────────────────┘
-                         └────────────────┘
+See the interactive diagram: **[docs/architecture-diagram.html](docs/architecture-diagram.html)**
 
-Query Flow:
-  User Query → Embed → Vector Search (top-K candidates)
-                     → Query SWAG Profile
-                     → Score alignment with chunk SWAG profiles
-                     → final_score = vector×0.65 + swag×0.30 + meta×0.05
-                     → Rerank → Generate Answer
+```
+Ingest:  Documents → Chunk → SWAG profile (metadata) → Embed original text → Index
+Query:   User query → Embed → Vector search (candidates) → SWAG rerank → Top-K → Answer
 ```
 
-## Installation
+**Rerank pipeline (v0.2):** ensure profiles → dedupe → score alignment → adaptive blend → noise gate → per-source diversity cap.
+
+## Quick start
 
 Requires **Python 3.11+**.
 
@@ -78,115 +68,108 @@ Requires **Python 3.11+**.
 git clone <repo-url> SWAG
 cd SWAG
 
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
 pip install -r requirements.txt
-
 cp .env.example .env
-# Optionally set OPENAI_API_KEY for real LLM profiles and answers
+
+python examples/demo.py
+uvicorn swag.app:app --reload --port 8080
 ```
 
-Without an API key, the framework uses `MockLLMClient` with heuristic SWAG profile extraction — sufficient for local demo and testing.
+Without an API key, the framework uses local `sentence-transformers` embeddings, heuristic SWAG profiles, and `MockLLMClient` — sufficient for demo and testing.
 
-## Project Structure
+**Docker:**
+
+```bash
+docker compose up --build
+# http://localhost:8080
+```
+
+## Project structure
 
 ```
 swag/
-├── app.py              # FastAPI demo API
-├── config.py           # Configuration (env vars, scoring weights)
+├── app.py              # FastAPI demo API (:8080)
+├── config.py           # Configuration (env vars, scoring, SWAG tuning)
+├── settings.py         # Kube-compatible settings bridge
 ├── ingest.py           # Document ingestion pipeline
 ├── chunking.py         # Configurable chunk size/overlap
+├── chunk_quality.py    # Chunk-kind detection + multipliers
 ├── embeddings.py       # sentence-transformers / OpenAI embedders
-├── vector_store.py     # FAISS (default) + stubs for Qdrant/Pinecone/Chroma
-├── swag_profile.py     # SWAG metadata generation (LLM)
-├── swag_scoring.py     # Query-chunk profile alignment scoring
+├── vector_store.py     # FAISS (default) + Qdrant
+├── profile.py          # SWAG profile generation (LLM / heuristic)
+├── heuristic.py        # Zero-cost heuristic profiles
+├── profiles.py         # Ensure profiles on search candidates
+├── scoring.py          # Query-chunk profile alignment scoring
+├── rerank.py           # SWAG rerank orchestrator
+├── postprocess.py      # Dedup, noise gate, diversity, adaptive blend
+├── adapters.py         # DocumentChunk ↔ dict hit conversion
+├── validation.py       # Profile sanitization + grounding
 ├── retrieval.py        # Baseline + SWAG reranking pipeline
-├── llm_client.py       # Modular LLM (OpenAI default)
+├── llm_client.py       # OpenAI / Ollama / Mock LLM
 ├── schemas.py          # Pydantic models
 └── utils.py            # Helpers
+docs/
+├── BUILD_AND_USAGE.md  # Full build & usage guide
+├── architecture-diagram.html
+└── DEPLOY.md           # Deployment mode quick reference
 data/                   # Place documents here
-indexes/                # FAISS index persistence
+indexes/                # FAISS index + SWAG metadata sidecar
 examples/demo.py        # CLI demo workflow
+tests/                  # Offline pytest suite
 ```
 
-## Ingest Documents
+## Usage
 
-Place files in `data/` (supports `.txt`, `.md`, `.pdf`, `.docx`).
+Full examples: [docs/BUILD_AND_USAGE.md](docs/BUILD_AND_USAGE.md)
 
-### CLI Demo
+### CLI demo
 
 ```bash
 python examples/demo.py
 python examples/demo.py --query "How does vendor invoice matching work?"
-python examples/demo.py --reindex   # force rebuild
+python examples/demo.py --reindex
 ```
 
 ### Python API
 
 ```python
-from swag import IngestionPipeline, SWAGConfig
+from swag import IngestionPipeline, RetrievalPipeline, SWAGConfig
 
 config = SWAGConfig.from_env()
+config.ensure_dirs()
 pipeline = IngestionPipeline(config=config)
-
-results = pipeline.ingest_directory()
+pipeline.ingest_directory()
 pipeline.save_index()
-
-for r in results:
-    print(f"{r.source_filename}: {r.num_chunks} chunks")
-```
-
-### FastAPI
-
-```bash
-uvicorn swag.app:app --reload
-```
-
-```bash
-curl -X POST http://localhost:8000/ingest -H "Content-Type: application/json" -d '{}'
-```
-
-## Query
-
-### Python API
-
-```python
-from swag import RetrievalPipeline, IngestionPipeline, SWAGConfig
-
-config = SWAGConfig.from_env()
-ingestion = IngestionPipeline(config=config)
-ingestion.load_index()
 
 retrieval = RetrievalPipeline(
     config=config,
-    embedder=ingestion.embedder,
-    vector_store=ingestion.vector_store,
+    embedder=pipeline.embedder,
+    vector_store=pipeline.vector_store,
+    profile_generator=pipeline.profile_generator,
 )
-
-# Compare baseline vs SWAG
 result = retrieval.query("How does three-way matching work?")
-
-print("Baseline:", result.baseline_results[0].explanation)
-print("SWAG:", result.swag_results[0].explanation)
-print("Answer:", result.answer)
 ```
 
 ### FastAPI
 
 ```bash
-curl -X POST http://localhost:8000/compare \
-  -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/compare \
+  -H 'Content-Type: application/json' \
   -d '{"question": "How does three-way matching work?", "top_k": 5}'
 ```
 
-## Scoring Formula
+## Scoring formula
 
 ```
 final_score = (vector_similarity × VECTOR_WEIGHT)
             + (swag_score × SWAG_WEIGHT)
             + (metadata_boost × METADATA_WEIGHT)
 ```
+
+Then scaled by chunk-kind quality multiplier (title / nav / boilerplate down-ranked).
 
 **Defaults** (configurable via `.env`):
 
@@ -196,76 +179,54 @@ final_score = (vector_similarity × VECTOR_WEIGHT)
 | `SWAG_WEIGHT` | 0.30 | Semantic profile alignment |
 | `METADATA_WEIGHT` | 0.05 | Domain match, filename relevance |
 
-SWAG scoring compares query and chunk profiles across weighted term categories:
-
-- `primary_concept` (1.0×)
-- `user_intent` (0.90×)
-- `domain_term` (0.85×)
-- `business_goal` (0.75×)
-- `direct_synonym` (0.70×) — retrieval hint only
-- `adjacent_concept` (0.60×)
-- `negative_context` — applies penalty to prevent false matches
+When `SWAG_ADAPTIVE_BLEND=true`, weights adjust per query based on vector score distribution.
 
 ## Guardrails
-
-SWAG implements protections against **semantic pollution**:
 
 1. **No isolated keyword expansion** — ambiguous words like "Apple" require full chunk context
 2. **Concept expansion, not keyword stuffing** — multi-word phrases preferred
 3. **Domain detection first** — profiles include `detected_domain`
-4. **Negative contexts** — e.g., "Apple silicon" includes negatives like "fruit", "orchard"
+4. **Negative contexts** — e.g. "Apple silicon" includes negatives like "fruit", "orchard"
 5. **Synonyms are not facts** — stored as weighted metadata with explicit retrieval-only purpose
+6. **Grounding checks** — ungrounded generated terms receive reduced weight
 
-## Swap Vector Databases
+## Backends
 
-The vector store is modular via `BaseVectorStore` in `vector_store.py`.
+| Component | Default | Alternatives |
+|-----------|---------|--------------|
+| Embeddings | `sentence-transformers` | `openai` |
+| Vector store | `faiss` (local disk) | `qdrant` |
+| SWAG profiles | `heuristic` ($0) | `llm` (OpenAI / Ollama) |
+| LLM answers | Mock (no key) | `openai`, `ollama` |
 
-**FAISS (default):**
-```env
-VECTOR_STORE_BACKEND=faiss
-```
+Extend via `BaseVectorStore` and `BaseLLMClient` factories — see [docs/BUILD_AND_USAGE.md](docs/BUILD_AND_USAGE.md#extending-backends).
 
-**Add Qdrant, Pinecone, or Chroma:**
+## Environment variables
 
-1. Implement a class extending `BaseVectorStore` (see `FAISSVectorStore` as reference)
-2. Register it in `create_vector_store()` factory
-3. Set `VECTOR_STORE_BACKEND=qdrant` (or `chroma`, `pinecone`)
-
-Stub classes are provided in `vector_store.py` with implementation guidance.
-
-## Add Another LLM Provider
-
-LLM integration is modular via `BaseLLMClient` in `llm_client.py`.
-
-1. Create a class implementing `complete()`, `complete_json()`, and optionally `generate_answer()`
-2. Register in `create_llm_client()` factory
-3. Set `LLM_PROVIDER=your_provider` in `.env`
-
-OpenAI is the default. `MockLLMClient` provides offline fallback.
-
-## Environment Variables
-
-See `.env.example` for all options:
+See `.env.example` for all options. Key settings:
 
 ```env
-OPENAI_API_KEY=sk-...
 EMBEDDING_PROVIDER=sentence-transformers
 VECTOR_STORE_BACKEND=faiss
+SWAG_PROFILE_MODE=heuristic
 VECTOR_WEIGHT=0.65
 SWAG_WEIGHT=0.30
 METADATA_WEIGHT=0.05
-CHUNK_SIZE=512
-CHUNK_OVERLAP=64
+RETRIEVAL_CANDIDATES=20
 TOP_K=10
+```
+
+## Tests
+
+```bash
+pytest tests/ -q
 ```
 
 ## License
 
 **Proprietary — source-visible, limited grant.** This is not open source.
 
-You may view, evaluate, and use the Software for personal learning, research, and
-internal non-commercial purposes. Commercial use, redistribution, and production
-deployment require a [commercial license](COMMERCIAL-LICENSE.md).
+You may view, evaluate, and use the Software for personal learning, research, and internal non-commercial purposes. Commercial use, redistribution, and production deployment require a [commercial license](COMMERCIAL-LICENSE.md).
 
 See [LICENSE](LICENSE) for full terms. **Pricing:** [PRICING.md](PRICING.md) · [Pricing page](blog/pricing.html)
 

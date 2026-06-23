@@ -54,6 +54,7 @@ class SWAGProfile(BaseModel):
     negative_contexts: list[str] = Field(default_factory=list)
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     detected_domain: str = Field(default="general", description="Detected domain context")
+    chunk_kind: str = Field(default="body", description="body | title | nav | boilerplate | empty")
     weighted_terms: list[WeightedSemanticTerm] = Field(default_factory=list)
 
     def to_category_lists(self) -> dict[str, list[str]]:
@@ -118,6 +119,7 @@ class RetrievalResult(BaseModel):
     final_score: float
     explanation: str
     rank: int = 0
+    chunk_kind: str = "body"
 
 
 class IngestResult(BaseModel):
@@ -136,3 +138,4 @@ class AnswerResult(BaseModel):
     baseline_results: list[RetrievalResult]
     swag_results: list[RetrievalResult]
     used_swag: bool = True
+    swag_meta: dict | None = None

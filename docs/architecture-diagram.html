@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SWAG — Architecture</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --card: #ffffff;
+      --border: #d5dbdb;
+      --text: #232f3e;
+      --muted: #545b64;
+      --header: #1a2332;
+      --accent: #00b8d9;
+      --violet: #7b61ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      line-height: 1.5;
+    }
+    header {
+      background: var(--header);
+      color: #fff;
+      padding: 1.5rem 2rem;
+    }
+    header h1 { margin: 0 0 0.25rem; font-size: 1.35rem; }
+    header p { margin: 0; opacity: 0.85; font-size: 0.95rem; }
+    nav { margin-top: 1rem; }
+    nav a { color: #fff; margin-right: 1.25rem; opacity: 0.9; }
+    nav a:hover { opacity: 1; }
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    section h2 {
+      margin: 0 0 0.25rem;
+      font-size: 1.1rem;
+    }
+    section p.desc {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .mermaid {
+      overflow-x: auto;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+    th { background: #f2f3f3; }
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .legend div {
+      padding: 0.75rem;
+      background: #f2f3f3;
+      border-radius: 8px;
+    }
+    .legend strong { display: block; margin-bottom: 0.25rem; }
+    .badge {
+      display: inline-block;
+      background: #e8f8fc;
+      color: var(--accent);
+      font-size: 0.8rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.88em;
+      background: #f2f3f3;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SWAG — Semantic Weighted Augmented Generation</h1>
+    <p>Portable RAG enhancement layer · v0.2 · Python 3.11+ · local / Docker / on-prem / cloud</p>
+    <nav>
+      <a href="BUILD_AND_USAGE.md">Build &amp; Usage</a>
+      <a href="DEPLOY.md">Deploy</a>
+      <a href="../README.md">README</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Design principle</h2>
+      <p class="desc">
+        Original chunk text remains authoritative. SWAG metadata is stored separately and used
+        exclusively for reranking. Synonyms and adjacent concepts are weighted retrieval hints —
+        never appended to chunks and never treated as source facts.
+      </p>
+      <div class="legend">
+        <div><strong>Ingest</strong>Chunk text → embed → index. Profiles generated in parallel, stored as metadata.</div>
+        <div><strong>Query</strong>Vector search → SWAG rerank → optional LLM answer. Chunks unchanged.</div>
+        <div><strong>Default ($0)</strong>FAISS + sentence-transformers + heuristic profiles. No API key required.</div>
+        <div><strong>Production</strong>Qdrant + OpenAI embeddings + <code>SWAG_PROFILE_MODE=llm</code> or Ollama on-prem.</div>
+        <div><strong>vs CRAG</strong>SWAG improves initial ranking. CRAG corrects after retrieval — complementary, not competing.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>System overview <span class="badge">portable</span></h2>
+      <p class="desc">
+        Single Python package with FastAPI demo. Deploy locally, in Docker, or on any VM/Kubernetes.
+        No AWS dependency. Kube RAG LangGraph vendors an adapted copy for EKS.
+      </p>
+      <pre class="mermaid">
+flowchart TB
+  subgraph client["Client"]
+    CLI["examples/demo.py"]
+    API["FastAPI swag.app :8080"]
+    App["Your Python app"]
+  end
+
+  subgraph swag_pkg["swag package"]
+    Ingest["IngestionPipeline"]
+    Retrieve["RetrievalPipeline"]
+    Rerank["rerank_hits_with_swag"]
+    Profile["SWAGProfileGenerator"]
+    Score["scoring + postprocess"]
+  end
+
+  subgraph backends["Pluggable backends"]
+  direction LR
+    Embed["Embeddings<br/>sentence-transformers | OpenAI"]
+    VS["Vector store<br/>FAISS | Qdrant"]
+    LLM["LLM<br/>OpenAI | Ollama | Mock"]
+  end
+
+  subgraph storage["Persistence"]
+    Data["data/ documents"]
+    Idx["indexes/ FAISS + .swag.json"]
+    QdrantDB["Qdrant collection"]
+  end
+
+  CLI --> Ingest
+  CLI --> Retrieve
+  API --> Ingest
+  API --> Retrieve
+  App --> Ingest
+  App --> Retrieve
+  App --> Rerank
+
+  Ingest --> Profile
+  Ingest --> Embed
+  Ingest --> VS
+  Retrieve --> Embed
+  Retrieve --> VS
+  Retrieve --> Rerank
+  Rerank --> Profile
+  Rerank --> Score
+  Retrieve --> LLM
+  Profile --> LLM
+
+  Data --> Ingest
+  VS --> Idx
+  VS --> QdrantDB
+      </pre>
+    </section>
+
+    <section>
+      <h2>Module map</h2>
+      <p class="desc">v0.2 module layout — reranker ported from kube_rag_langg production path.</p>
+      <table>
+        <thead>
+          <tr><th>Module</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>ingest.py</code></td><td>Load, chunk, profile, embed, index</td></tr>
+          <tr><td><code>retrieval.py</code></td><td>Baseline + SWAG query pipeline</td></tr>
+          <tr><td><code>rerank.py</code></td><td>Main SWAG rerank orchestrator</td></tr>
+          <tr><td><code>profile.py</code></td><td>LLM / heuristic profile generation</td></tr>
+          <tr><td><code>heuristic.py</code></td><td>Zero-cost profile extraction</td></tr>
+          <tr><td><code>scoring.py</code></td><td>Query-chunk alignment + final score</td></tr>
+          <tr><td><code>postprocess.py</code></td><td>Dedup, noise gate, diversity, adaptive blend</td></tr>
+          <tr><td><code>profiles.py</code></td><td>Ensure profiles on search candidates</td></tr>
+          <tr><td><code>chunk_quality.py</code></td><td>Chunk-kind detection + multipliers</td></tr>
+          <tr><td><code>adapters.py</code></td><td>DocumentChunk ↔ dict hit conversion</td></tr>
+          <tr><td><code>settings.py</code></td><td>Kube-compatible settings bridge</td></tr>
+          <tr><td><code>vector_store.py</code></td><td>FAISS (default) + Qdrant</td></tr>
+          <tr><td><code>config.py</code></td><td>Env-based configuration</td></tr>
+          <tr><td><code>app.py</code></td><td>FastAPI demo service</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Ingestion sequence</h2>
+      <p class="desc">
+        Profiles are generated from chunk text but stored separately. Embeddings use
+        <strong>original text only</strong> — never synonym-expanded content.
+      </p>
+      <pre class="mermaid">
+sequenceDiagram
+  actor User
+  participant Pipe as IngestionPipeline
+  participant Load as Document loaders
+  participant Chunk as chunking.py
+  participant Prof as SWAGProfileGenerator
+  participant Emb as Embedder
+  participant VS as Vector store
+
+  User->>Pipe: ingest_directory data/
+  Pipe->>Load: load txt md pdf docx
+  Load-->>Pipe: pages text
+  Pipe->>Chunk: chunk with size overlap
+  Chunk-->>Pipe: DocumentChunks
+
+  alt SWAG_INGEST_PROFILES
+    loop each chunk
+      Pipe->>Prof: generate_chunk_profile
+      Prof-->>Pipe: SWAGProfile metadata
+    end
+  end
+
+  Pipe->>Emb: embed raw_text only
+  Emb-->>Pipe: vectors
+  Pipe->>VS: add chunks vectors profiles
+  Pipe->>VS: save index
+      </pre>
+    </section>
+
+    <section>
+      <h2>Query / SWAG rerank sequence</h2>
+      <p class="desc">
+        Retrieves a larger candidate pool than top-K, then reranks with production postprocessing.
+        Missing profiles are generated inline (heuristic or LLM per <code>SWAG_PROFILE_MODE</code>).
+      </p>
+      <pre class="mermaid">
+sequenceDiagram
+  actor User
+  participant Ret as RetrievalPipeline
+  participant Emb as Embedder
+  participant VS as Vector store
+  participant RR as rerank_hits_with_swag
+  participant Prof as profiles.py
+  participant Post as postprocess.py
+  participant LLM as LLM client
+
+  User->>Ret: query question top_k
+  Ret->>Emb: embed_query
+  Ret->>VS: search RETRIEVAL_CANDIDATES
+  VS-->>Ret: candidate chunks
+
+  Ret->>RR: rerank_hits_with_swag
+  RR->>Prof: ensure_swag_profiles
+  Prof-->>RR: enriched hits
+  RR->>RR: dedupe near duplicates
+  RR->>RR: query profile + score alignment
+  RR->>Post: noise gate diversity cap
+  Post-->>RR: final top_k
+  RR-->>Ret: swag_results + meta
+
+  Ret->>Ret: retrieve_baseline for compare
+  opt generate_answer
+    Ret->>LLM: top 3 chunk texts
+    LLM-->>Ret: answer
+  end
+  Ret-->>User: AnswerResult
+      </pre>
+    </section>
+
+    <section>
+      <h2>SWAG vs baseline RAG vs CRAG</h2>
+      <p class="desc">SWAG sits between vector retrieval and generation. Combined with CRAG in kube deployments.</p>
+      <pre class="mermaid">
+flowchart LR
+  subgraph baseline["Baseline RAG"]
+    B1[Embed query] --> B2[Vector top-K] --> B3[Generate]
+  end
+
+  subgraph swag_rag["SWAG + RAG"]
+    S1[Embed query] --> S2[Vector candidates] --> S3[SWAG rerank] --> S4[Top-K] --> S5[Generate]
+  end
+
+  subgraph crag["CRAG alone"]
+    C1[Retrieve] --> C2[Grade confidence] --> C3{Low?}
+    C3 -->|yes| C4[Web / re-retrieve]
+    C3 -->|no| C5[Generate]
+    C4 --> C5
+  end
+
+  subgraph combined["SWAG + CRAG kube"]
+    K1[Retrieve] --> K2[SWAG rerank] --> K3[CRAG grade] --> K4[Generate]
+  end
+      </pre>
+    </section>
+
+    <section>
+      <h2>Deployment modes</h2>
+      <pre class="mermaid">
+flowchart TB
+  subgraph local["Local dev $0"]
+    L1[sentence-transformers]
+    L2[FAISS indexes/]
+    L3[heuristic SWAG]
+    L4[Mock LLM]
+  end
+
+  subgraph docker["Docker compose"]
+    D1[swag container :8080]
+    D2[volumes data indexes]
+  end
+
+  subgraph onprem["On-prem"]
+    O1[Ollama LLM]
+    O2[FAISS or Qdrant]
+    O3[heuristic or llm profiles]
+  end
+
+  subgraph cloud["Cloud profile qdrant"]
+    C1[Qdrant service]
+    C2[OpenAI embed + LLM]
+    C3[swag-qdrant container]
+  end
+
+  local --> docker
+  onprem --> docker
+  cloud --> docker
+      </pre>
+      <table style="margin-top:1rem">
+        <thead>
+          <tr><th>Mode</th><th>Command</th><th>Key env</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Local</td><td><code>python examples/demo.py</code></td><td>defaults in <code>.env.example</code></td></tr>
+          <tr><td>Docker</td><td><code>docker compose up --build</code></td><td><code>VECTOR_STORE_BACKEND=faiss</code></td></tr>
+          <tr><td>On-prem LLM</td><td>same + Ollama host</td><td><code>LLM_PROVIDER=ollama</code></td></tr>
+          <tr><td>Cloud</td><td><code>docker compose --profile qdrant up</code></td><td><code>VECTOR_STORE_BACKEND=qdrant</code>, <code>OPENAI_API_KEY</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Scoring formula</h2>
+      <p class="desc">Configurable via <code>VECTOR_WEIGHT</code>, <code>SWAG_WEIGHT</code>, <code>METADATA_WEIGHT</code>. Adaptive blend adjusts weights per query when enabled.</p>
+      <pre class="mermaid">
+flowchart LR
+  V[vector_similarity] -->|0.65 default| F[final_score]
+  S[swag_alignment] -->|0.30 default| F
+  M[metadata_boost] -->|0.05 default| F
+  F --> Q[chunk_quality multiplier]
+  Q --> R[ranked results]
+      </pre>
+      <table style="margin-top:1rem">
+        <thead>
+          <tr><th>Category</th><th>Multiplier</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>primary_concept</td><td>1.0×</td><td>Core topic</td></tr>
+          <tr><td>user_intent</td><td>0.90×</td><td>Question intent</td></tr>
+          <tr><td>domain_term</td><td>0.85×</td><td>Domain vocabulary</td></tr>
+          <tr><td>business_goal</td><td>0.75×</td><td>Operational goals</td></tr>
+          <tr><td>direct_synonym</td><td>0.70×</td><td>Retrieval hint only</td></tr>
+          <tr><td>adjacent_concept</td><td>0.60×</td><td>Related concepts</td></tr>
+          <tr><td>negative_context</td><td>penalty</td><td>False-match guard</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>API surface</h2>
+      <table>
+        <thead>
+          <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GET</td><td><code>/</code></td><td>Service info, chunk count, endpoints</td></tr>
+          <tr><td>GET</td><td><code>/health</code></td><td>Liveness</td></tr>
+          <tr><td>GET</td><td><code>/config</code></td><td>Active backends, scoring weights</td></tr>
+          <tr><td>POST</td><td><code>/ingest</code></td><td>Index documents from <code>data/</code></td></tr>
+          <tr><td>POST</td><td><code>/query</code></td><td>RAG query with <code>use_swag</code> toggle</td></tr>
+          <tr><td>POST</td><td><code>/compare</code></td><td>Baseline vs SWAG side-by-side + <code>swag_meta</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      flowchart: { curve: 'basis', padding: 16 },
+      securityLevel: 'loose'
+    });
+  </script>
+</body>
+</html>

@@ -10,7 +10,7 @@ from swag.chunking import chunk_pages, chunk_text
 from swag.config import SWAGConfig
 from swag.embeddings import BaseEmbedder, create_embedder
 from swag.schemas import IngestResult
-from swag.swag_profile import SWAGProfileGenerator
+from swag.profile import SWAGProfileGenerator
 from swag.utils import supported_extensions
 from swag.vector_store import BaseVectorStore, create_vector_store
 
@@ -81,7 +81,7 @@ class IngestionPipeline:
         self.vector_store = vector_store or create_vector_store(
             self.config, dimension=self.embedder.dimension
         )
-        self.profile_generator = profile_generator or SWAGProfileGenerator(config=self.config)
+        self.profile_generator = profile_generator or SWAGProfileGenerator()
 
     def ingest_file(self, path: Path, generate_swag: bool = True) -> IngestResult:
         """Ingest a single file."""

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import pickle
+import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
@@ -47,6 +48,10 @@ class BaseVectorStore(ABC):
     @abstractmethod
     def count(self) -> int:
         """Number of indexed chunks."""
+
+    def update_chunk_profile(self, chunk_id: str, profile) -> None:
+        """Persist an updated SWAG profile for a chunk (optional backend support)."""
+        del chunk_id, profile
 
     def get_all_chunks(self) -> list[DocumentChunk]:
         """Return all stored chunks (for SWAG profile lookup)."""
@@ -166,6 +171,14 @@ class FAISSVectorStore(BaseVectorStore):
     def get_all_chunks(self) -> list[DocumentChunk]:
         return list(self._chunks)
 
+    def update_chunk_profile(self, chunk_id: str, profile) -> None:
+        from swag.schemas import SWAGProfile
+
+        for chunk in self._chunks:
+            if chunk.chunk_id == chunk_id:
+                chunk.swag_profile = profile if isinstance(profile, SWAGProfile) else SWAGProfile(**profile)
+                return
+
 
 class ChromaVectorStore(BaseVectorStore):
     """
@@ -198,28 +211,116 @@ class ChromaVectorStore(BaseVectorStore):
 
 
 class QdrantVectorStore(BaseVectorStore):
-    """Qdrant vector store stub."""
+    """Qdrant backend for on-prem or cloud vector search."""
 
     def __init__(self, config: VectorStoreConfig, dimension: int):
-        raise NotImplementedError(
-            "Qdrant backend stub. Install qdrant-client and implement "
-            "QdrantVectorStore following the FAISSVectorStore pattern."
+        try:
+            from qdrant_client import QdrantClient
+            from qdrant_client.models import Distance, PointStruct, VectorParams
+        except ImportError as exc:
+            raise ImportError("Install qdrant-client: pip install qdrant-client") from exc
+
+        self.config = config
+        self.dimension = dimension
+        self._PointStruct = PointStruct
+        self.client = QdrantClient(url=config.qdrant_url)
+        self.collection = config.collection_name
+        self._chunks_cache: dict[str, DocumentChunk] = {}
+
+        if not self.client.collection_exists(self.collection):
+            self.client.create_collection(
+                collection_name=self.collection,
+                vectors_config=VectorParams(size=dimension, distance=Distance.COSINE),
+            )
+
+    def _point_id(self, chunk_id: str) -> str:
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, chunk_id))
+
+    def _chunk_payload(self, chunk: DocumentChunk) -> dict:
+        return {
+            "chunk_id": chunk.chunk_id,
+            "source_filename": chunk.source_filename,
+            "page_number": chunk.page_number,
+            "raw_text": chunk.raw_text,
+            "char_start": chunk.char_start,
+            "char_end": chunk.char_end,
+            "metadata": chunk.metadata,
+            "swag_profile": chunk.swag_profile.model_dump() if chunk.swag_profile else None,
+        }
+
+    def _chunk_from_payload(self, payload: dict) -> DocumentChunk:
+        from swag.schemas import SWAGProfile
+
+        profile_data = payload.get("swag_profile")
+        profile = SWAGProfile(**profile_data) if profile_data else None
+        return DocumentChunk(
+            chunk_id=payload["chunk_id"],
+            source_filename=payload.get("source_filename", "unknown"),
+            page_number=payload.get("page_number"),
+            raw_text=payload.get("raw_text", ""),
+            char_start=int(payload.get("char_start", 0)),
+            char_end=int(payload.get("char_end", 0)),
+            metadata=payload.get("metadata") or {},
+            swag_profile=profile,
         )
 
-    def add(self, chunks, embeddings):
-        pass
+    def add(self, chunks: list[DocumentChunk], embeddings: list[list[float]]) -> None:
+        if len(chunks) != len(embeddings):
+            raise ValueError("chunks and embeddings length mismatch")
 
-    def search(self, query_embedding, top_k):
-        return []
+        points = []
+        for chunk, vector in zip(chunks, embeddings):
+            self._chunks_cache[chunk.chunk_id] = chunk
+            points.append(
+                self._PointStruct(
+                    id=self._point_id(chunk.chunk_id),
+                    vector=vector,
+                    payload=self._chunk_payload(chunk),
+                )
+            )
+        self.client.upsert(collection_name=self.collection, points=points)
+        logger.info("Upserted %d chunks to Qdrant collection %s", len(points), self.collection)
 
-    def save(self):
-        pass
+    def search(self, query_embedding: list[float], top_k: int) -> list[SearchResult]:
+        hits = self.client.search(
+            collection_name=self.collection,
+            query_vector=query_embedding,
+            limit=top_k,
+        )
+        results: list[SearchResult] = []
+        for hit in hits:
+            payload = hit.payload or {}
+            chunk = self._chunk_from_payload(payload)
+            self._chunks_cache[chunk.chunk_id] = chunk
+            score = float(hit.score)
+            normalized = score if 0.0 <= score <= 1.0 else max(0.0, min(1.0, (score + 1.0) / 2.0))
+            results.append(SearchResult(chunk=chunk, score=normalized))
+        return results
 
-    def load(self):
-        return False
+    def save(self) -> None:
+        return None
 
-    def count(self):
-        return 0
+    def load(self) -> bool:
+        return self.count() > 0
+
+    def count(self) -> int:
+        try:
+            info = self.client.get_collection(self.collection)
+            return int(info.points_count or 0)
+        except Exception:
+            return 0
+
+    def update_chunk_profile(self, chunk_id: str, profile) -> None:
+        from swag.schemas import SWAGProfile
+
+        prof = profile if isinstance(profile, SWAGProfile) else SWAGProfile(**profile)
+        self.client.set_payload(
+            collection_name=self.collection,
+            payload={"swag_profile": prof.model_dump()},
+            points=[self._point_id(chunk_id)],
+        )
+        if chunk_id in self._chunks_cache:
+            self._chunks_cache[chunk_id].swag_profile = prof
 
 
 def create_vector_store(

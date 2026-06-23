@@ -1,7 +1,11 @@
 """
-FastAPI demo application for SWAG RAG.
+FastAPI service for SWAG RAG — local, on-prem, or cloud.
 
-Run: uvicorn swag.app:app --reload
+Run locally:
+  uvicorn swag.app:app --reload --port 8080
+
+Docker:
+  docker compose up --build
 """
 
 from __future__ import annotations
@@ -13,6 +17,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from swag import __version__
 from swag.config import SWAGConfig
 from swag.ingest import IngestionPipeline
 from swag.retrieval import RetrievalPipeline
@@ -24,10 +29,9 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="SWAG RAG",
     description="Semantic Weighted Augmented Generation — retrieval enhancement for RAG",
-    version="0.1.0",
+    version=__version__,
 )
 
-# Shared pipeline state (initialized on startup)
 _config: SWAGConfig | None = None
 _ingestion: IngestionPipeline | None = None
 _retrieval: RetrievalPipeline | None = None
@@ -38,6 +42,9 @@ def get_pipelines() -> tuple[IngestionPipeline, RetrievalPipeline]:
     if _ingestion is None or _retrieval is None:
         _config = SWAGConfig.from_env()
         _config.ensure_dirs()
+        from swag.settings import reload_settings
+
+        reload_settings(_config)
         _ingestion = IngestionPipeline(config=_config)
         _retrieval = RetrievalPipeline(
             config=_config,
@@ -45,9 +52,8 @@ def get_pipelines() -> tuple[IngestionPipeline, RetrievalPipeline]:
             vector_store=_ingestion.vector_store,
             profile_generator=_ingestion.profile_generator,
         )
-        # Try loading existing index
         if _ingestion.load_index():
-            logger.info("Loaded existing index with %d chunks", _ingestion.vector_store.count())
+            logger.info("Loaded index with %d chunks", _ingestion.vector_store.count())
     return _ingestion, _retrieval
 
 
@@ -68,6 +74,7 @@ class CompareResponse(BaseModel):
     answer: str
     baseline: list[RetrievalResult]
     swag: list[RetrievalResult]
+    swag_meta: dict | None = None
 
 
 @app.on_event("startup")
@@ -77,16 +84,20 @@ async def startup():
 
 @app.get("/")
 async def root():
-    ingestion, retrieval = get_pipelines()
+    ingestion, _ = get_pipelines()
+    cfg = ingestion.config
     return {
         "name": "SWAG RAG",
-        "version": "0.1.0",
+        "version": __version__,
         "indexed_chunks": ingestion.vector_store.count(),
+        "vector_store": cfg.vector_store.backend,
+        "swag_profile_mode": cfg.swag.swag_profile_mode,
         "endpoints": {
             "ingest": "POST /ingest",
             "query": "POST /query",
             "compare": "POST /compare",
             "health": "GET /health",
+            "config": "GET /config",
         },
     }
 
@@ -97,9 +108,23 @@ async def health():
     return {"status": "ok", "indexed_chunks": ingestion.vector_store.count()}
 
 
+@app.get("/config")
+async def show_config():
+    ingestion, _ = get_pipelines()
+    cfg = ingestion.config
+    return {
+        "embedding_provider": cfg.embedding.provider,
+        "vector_store": cfg.vector_store.backend,
+        "llm_provider": cfg.llm.provider,
+        "swag_profile_mode": cfg.swag.swag_profile_mode,
+        "top_k": cfg.top_k,
+        "retrieval_candidates": cfg.retrieval_candidates,
+        "scoring": cfg.scoring.model_dump(),
+    }
+
+
 @app.post("/ingest", response_model=list[IngestResult])
 async def ingest_documents(request: IngestRequest):
-    """Ingest documents from data directory, build index, generate SWAG profiles."""
     ingestion, _ = get_pipelines()
     directory = Path(request.directory) if request.directory else ingestion.config.data_dir
 
@@ -113,7 +138,6 @@ async def ingest_documents(request: IngestRequest):
 
 @app.post("/query", response_model=AnswerResult)
 async def query_documents(request: QueryRequest):
-    """Query with SWAG reranking and optional answer generation."""
     _, retrieval = get_pipelines()
 
     if retrieval.vector_store.count() == 0:
@@ -132,7 +156,6 @@ async def query_documents(request: QueryRequest):
 
 @app.post("/compare", response_model=CompareResponse)
 async def compare_retrieval(request: QueryRequest):
-    """Compare baseline RAG vs SWAG-reranked results side by side."""
     _, retrieval = get_pipelines()
 
     if retrieval.vector_store.count() == 0:
@@ -150,4 +173,5 @@ async def compare_retrieval(request: QueryRequest):
         answer=result.answer,
         baseline=result.baseline_results,
         swag=result.swag_results,
+        swag_meta=result.swag_meta,
     )

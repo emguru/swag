@@ -81,6 +81,39 @@ class OpenAILLMClient(BaseLLMClient):
         return json.loads(content)
 
 
+class OllamaLLMClient(BaseLLMClient):
+    """On-prem LLM via Ollama HTTP API."""
+
+    def __init__(self, config: LLMConfig):
+        self.config = config
+
+    def complete(self, system_prompt: str, user_prompt: str) -> str:
+        import httpx
+
+        response = httpx.post(
+            f"{self.config.ollama_base_url.rstrip('/')}/api/chat",
+            json={
+                "model": self.config.model_name,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "stream": False,
+                "options": {"temperature": self.config.temperature},
+            },
+            timeout=120.0,
+        )
+        response.raise_for_status()
+        return response.json().get("message", {}).get("content", "")
+
+    def complete_json(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
+        content = self.complete(
+            system_prompt + "\nRespond with valid JSON only.",
+            user_prompt,
+        )
+        return json.loads(content)
+
+
 class MockLLMClient(BaseLLMClient):
     """
     Fallback LLM for local demo without API keys.
@@ -97,14 +130,19 @@ class MockLLMClient(BaseLLMClient):
         return "Mock LLM response."
 
     def complete_json(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
-        # Extract chunk text from user prompt for heuristic profile generation
+        from swag.heuristic import heuristic_chunk_profile, heuristic_query_profile
+
         text = user_prompt
         if "CHUNK TEXT:" in text:
-            text = text.split("CHUNK TEXT:")[-1].split("Return JSON")[0].strip()
-        elif "QUERY:" in text:
-            text = text.split("QUERY:")[-1].split("Return JSON")[0].strip()
-
-        return _heuristic_swag_json(text)
+            chunk_text = text.split("CHUNK TEXT:")[-1].split("Return JSON")[0].strip()
+            source = "unknown"
+            if "SOURCE FILE:" in text:
+                source = text.split("SOURCE FILE:")[-1].split("PAGE:")[0].strip()
+            return heuristic_chunk_profile(chunk_text, source_filename=source).model_dump()
+        if "QUERY:" in text:
+            query = text.split("QUERY:")[-1].split("Return JSON")[0].strip()
+            return heuristic_query_profile(query).model_dump()
+        return heuristic_chunk_profile(text).model_dump()
 
 
 def _heuristic_swag_json(text: str) -> dict[str, Any]:
@@ -154,12 +192,19 @@ def create_llm_client(swag_config: Optional[SWAGConfig] = None) -> BaseLLMClient
 
     if provider == "openai":
         if cfg.openai_api_key:
-            return OpenAILLMClient(cfg.llm, cfg.openai_api_key)
-        logger.warning("No OPENAI_API_KEY — using MockLLMClient for SWAG profiles and answers.")
+            llm_cfg = cfg.llm.model_copy()
+            if cfg.swag.swag_grader_model:
+                llm_cfg.model_name = cfg.swag.swag_grader_model
+            return OpenAILLMClient(llm_cfg, cfg.openai_api_key)
+        logger.warning("No OPENAI_API_KEY — using MockLLMClient.")
         return MockLLMClient()
 
-    # Placeholder for future providers (anthropic, ollama, etc.)
+    if provider == "ollama":
+        return OllamaLLMClient(cfg.llm)
+
+    if provider == "mock":
+        return MockLLMClient()
+
     raise ValueError(
-        f"Unsupported LLM provider: {provider}. "
-        "Supported: openai. Extend llm_client.py to add more."
+        f"Unsupported LLM provider: {provider}. Supported: openai, ollama, mock."
     )

@@ -53,6 +53,10 @@ def chunk_text(
                     raw_text=chunk_text_slice,
                     char_start=start,
                     char_end=end,
+                    metadata={
+                        "document_id": source_filename,
+                        "chunk_index": index,
+                    },
                 )
             )
             index += 1
