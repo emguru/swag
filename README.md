@@ -127,10 +127,13 @@ Full examples: [docs/BUILD_AND_USAGE.md](docs/BUILD_AND_USAGE.md)
 
 ### CLI demo
 
+Shows scores and source files only. Use `--verbose` for ranking deltas.
+
 ```bash
 python examples/demo.py
 python examples/demo.py --query "How does vendor invoice matching work?"
 python examples/demo.py --reindex
+python examples/demo.py --verbose   # ranking deltas + swag_meta
 ```
 
 ### Python API
@@ -154,6 +157,8 @@ result = retrieval.query("How does three-way matching work?")
 ```
 
 ### FastAPI
+
+Responses omit chunk text and explanations by default. Pass `include_text` / `include_explanation` to opt in.
 
 ```bash
 curl -X POST http://localhost:8080/compare \

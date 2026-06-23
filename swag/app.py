@@ -67,6 +67,14 @@ class QueryRequest(BaseModel):
     top_k: int = Field(default=5, ge=1, le=50)
     generate_answer: bool = Field(default=True)
     use_swag: bool = Field(default=True)
+    include_text: bool = Field(
+        default=False,
+        description="Include full chunk text in results (default: scores and source only)",
+    )
+    include_explanation: bool = Field(
+        default=False,
+        description="Include per-hit SWAG scoring explanations",
+    )
 
 
 class CompareResponse(BaseModel):
@@ -75,6 +83,27 @@ class CompareResponse(BaseModel):
     baseline: list[RetrievalResult]
     swag: list[RetrievalResult]
     swag_meta: dict | None = None
+
+
+def _trim_results(
+    results: list[RetrievalResult],
+    *,
+    include_text: bool,
+    include_explanation: bool,
+) -> list[RetrievalResult]:
+    if include_text and include_explanation:
+        return results
+    trimmed: list[RetrievalResult] = []
+    for r in results:
+        trimmed.append(
+            r.model_copy(
+                update={
+                    "raw_text": r.raw_text if include_text else "",
+                    "explanation": r.explanation if include_explanation else "",
+                }
+            )
+        )
+    return trimmed
 
 
 @app.on_event("startup")
@@ -146,11 +175,25 @@ async def query_documents(request: QueryRequest):
             detail="No documents indexed. POST /ingest first.",
         )
 
-    return retrieval.query(
+    result = retrieval.query(
         question=request.question,
         top_k=request.top_k,
         generate_answer=request.generate_answer,
         use_swag=request.use_swag,
+    )
+    return result.model_copy(
+        update={
+            "baseline_results": _trim_results(
+                result.baseline_results,
+                include_text=request.include_text,
+                include_explanation=request.include_explanation,
+            ),
+            "swag_results": _trim_results(
+                result.swag_results,
+                include_text=request.include_text,
+                include_explanation=request.include_explanation,
+            ),
+        }
     )
 
 
@@ -171,7 +214,15 @@ async def compare_retrieval(request: QueryRequest):
     return CompareResponse(
         query=result.query,
         answer=result.answer,
-        baseline=result.baseline_results,
-        swag=result.swag_results,
+        baseline=_trim_results(
+            result.baseline_results,
+            include_text=request.include_text,
+            include_explanation=request.include_explanation,
+        ),
+        swag=_trim_results(
+            result.swag_results,
+            include_text=request.include_text,
+            include_explanation=request.include_explanation,
+        ),
         swag_meta=result.swag_meta,
     )

@@ -26,20 +26,18 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def print_results(title: str, results: list, show_text: bool = True) -> None:
+def print_results(title: str, results: list) -> None:
     print(f"\n{'=' * 60}")
     print(f"  {title}")
     print("=" * 60)
     for r in results:
-        print(f"\n  Rank {r.rank} | {r.source_document}")
-        if r.page_number:
-            print(f"  Page: {r.page_number}")
-        print(f"  Vector: {r.vector_similarity:.3f} | SWAG: {r.swag_score:.3f} | "
-              f"Meta: {r.metadata_boost:.3f} | Final: {r.final_score:.3f}")
-        print(f"  {r.explanation[:120]}...")
-        if show_text:
-            preview = r.raw_text[:200].replace("\n", " ")
-            print(f"  Text: {preview}...")
+        page = f" p.{r.page_number}" if r.page_number else ""
+        print(
+            f"  {r.rank}. {r.source_document}{page}"
+            f"  |  vec {r.vector_similarity:.3f}"
+            f"  swag {r.swag_score:.3f}"
+            f"  final {r.final_score:.3f}"
+        )
 
 
 def main():
@@ -52,6 +50,11 @@ def main():
     parser.add_argument("--top-k", type=int, default=5, help="Number of results")
     parser.add_argument("--reindex", action="store_true", help="Force re-ingestion")
     parser.add_argument("--no-answer", action="store_true", help="Skip answer generation")
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Show ranking deltas and SWAG metadata (default: scores + answer only)",
+    )
     args = parser.parse_args()
 
     config = SWAGConfig.from_env()
@@ -94,16 +97,20 @@ def main():
     print_results("BASELINE RAG (vector similarity only)", answer_result.baseline_results)
     print_results("SWAG RERANKED (vector + semantic weights)", answer_result.swag_results)
 
-    # Show ranking differences
-    baseline_ids = [r.chunk_id for r in answer_result.baseline_results]
-    swag_ids = [r.chunk_id for r in answer_result.swag_results]
-    if baseline_ids != swag_ids:
-        print("\n📊 Ranking changed after SWAG reranking:")
-        for i, (b_id, s_id) in enumerate(zip(baseline_ids, swag_ids)):
-            marker = " ← changed" if b_id != s_id else ""
-            print(f"   Rank {i+1}: baseline={b_id} | swag={s_id}{marker}")
-    else:
-        print("\n📊 Rankings identical (SWAG confirmed vector ordering)")
+    if args.verbose:
+        baseline_ids = [r.chunk_id for r in answer_result.baseline_results]
+        swag_ids = [r.chunk_id for r in answer_result.swag_results]
+        if baseline_ids != swag_ids:
+            print("\n📊 Ranking changed after SWAG reranking")
+            for i, (b, s) in enumerate(
+                zip(answer_result.baseline_results, answer_result.swag_results), start=1
+            ):
+                if b.chunk_id != s.chunk_id:
+                    print(f"   #{i}: {b.source_document} → {s.source_document}")
+        else:
+            print("\n📊 Rankings identical (SWAG confirmed vector ordering)")
+        if answer_result.swag_meta:
+            print(f"   SWAG meta: {answer_result.swag_meta}")
 
     if answer_result.answer:
         print(f"\n💬 Answer:\n{answer_result.answer}")

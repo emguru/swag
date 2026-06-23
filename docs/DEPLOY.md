@@ -96,8 +96,16 @@ Deploy the `swag-qdrant` container to ECS, EKS, Fly.io, Railway, etc. Point `QDR
 | GET | `/health` | Liveness |
 | GET | `/config` | Active backends and SWAG mode |
 | POST | `/ingest` | Index `data/` directory |
-| POST | `/query` | RAG query with SWAG rerank (`use_swag` toggle) |
+| POST | `/query` | RAG query (`use_swag`, `include_text`, `include_explanation`) |
 | POST | `/compare` | Baseline vs SWAG side-by-side |
+
+`POST /query` and `POST /compare` omit chunk text and explanations unless `include_text` / `include_explanation` are `true`.
+
+```bash
+curl -X POST http://localhost:8080/query \
+  -H 'Content-Type: application/json' \
+  -d '{"question": "What is SWAG?", "top_k": 5}'
+```
 
 ---
 
@@ -120,7 +128,7 @@ retrieval = RetrievalPipeline(
     profile_generator=ingest.profile_generator,
 )
 result = retrieval.query("What is SWAG?", use_swag=True)
-print(result.swag_results[0].explanation)
+print(f"{result.swag_results[0].source_document}  final={result.swag_results[0].final_score:.3f}")
 ```
 
 ---

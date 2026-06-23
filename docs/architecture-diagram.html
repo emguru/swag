@@ -390,6 +390,11 @@ flowchart LR
 
     <section>
       <h2>API surface</h2>
+      <p class="desc">
+        <code>POST /query</code> and <code>POST /compare</code> return scores and source metadata by default.
+        Set <code>include_text</code> or <code>include_explanation</code> to include full chunk text or SWAG match detail.
+        The CLI demo (<code>examples/demo.py</code>) follows the same convention; use <code>--verbose</code> for ranking deltas.
+      </p>
       <table>
         <thead>
           <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
@@ -399,8 +404,18 @@ flowchart LR
           <tr><td>GET</td><td><code>/health</code></td><td>Liveness</td></tr>
           <tr><td>GET</td><td><code>/config</code></td><td>Active backends, scoring weights</td></tr>
           <tr><td>POST</td><td><code>/ingest</code></td><td>Index documents from <code>data/</code></td></tr>
-          <tr><td>POST</td><td><code>/query</code></td><td>RAG query with <code>use_swag</code> toggle</td></tr>
-          <tr><td>POST</td><td><code>/compare</code></td><td>Baseline vs SWAG side-by-side + <code>swag_meta</code></td></tr>
+          <tr><td>POST</td><td><code>/query</code></td><td>RAG query — <code>use_swag</code>, <code>include_text</code>, <code>include_explanation</code></td></tr>
+          <tr><td>POST</td><td><code>/compare</code></td><td>Baseline vs SWAG + <code>swag_meta</code></td></tr>
+        </tbody>
+      </table>
+      <table style="margin-top:1rem">
+        <thead>
+          <tr><th>Request field</th><th>Default</th><th>Effect</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>include_text</code></td><td><code>false</code></td><td>Include <code>raw_text</code> per hit</td></tr>
+          <tr><td><code>include_explanation</code></td><td><code>false</code></td><td>Include SWAG scoring explanations</td></tr>
+          <tr><td><code>use_swag</code></td><td><code>true</code></td><td>Enable SWAG reranking on <code>/query</code></td></tr>
         </tbody>
       </table>
     </section>

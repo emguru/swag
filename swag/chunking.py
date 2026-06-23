@@ -66,7 +66,7 @@ def chunk_text(
 
         start = max(end - overlap, start + 1)
 
-    logger.info("Chunked %s into %d chunks", source_filename, len(chunks))
+    logger.debug("Chunked %s into %d chunks", source_filename, len(chunks))
     return chunks
 
 

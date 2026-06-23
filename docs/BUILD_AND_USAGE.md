@@ -144,11 +144,21 @@ Place files in `data/` — supports `.txt`, `.md`, `.pdf`, `.docx`.
 
 ### CLI demo
 
+Shows **scores and source files only** by default — no chunk text dumps.
+
 ```bash
 python examples/demo.py
 python examples/demo.py --query "How does vendor invoice matching work?"
-python examples/demo.py --reindex    # force rebuild
-python examples/demo.py --no-answer  # skip LLM answer
+python examples/demo.py --reindex       # force rebuild
+python examples/demo.py --no-answer     # skip LLM answer
+python examples/demo.py --verbose       # ranking deltas + swag_meta
+```
+
+Example output:
+
+```
+  1. accounts_payable_guide.md  |  vec 0.715  swag 0.374  final 0.504
+  2. accounts_payable_guide.md  |  vec 0.732  swag 0.000  final 0.305
 ```
 
 ### Python API
@@ -183,6 +193,18 @@ Optional body: `{"directory": "/path/to/docs", "generate_swag": true}`
 
 ## Query and compare
 
+API and demo responses are **quiet by default**: scores, source filenames, and answers — not full chunk text or SWAG match explanations. Opt in when you need detail.
+
+### Response detail flags
+
+| Flag | Where | Default | When `true` |
+|------|-------|---------|-------------|
+| `--verbose` | CLI demo | off | Ranking deltas + `swag_meta` |
+| `include_text` | `POST /query`, `/compare` | `false` | Full `raw_text` per hit |
+| `include_explanation` | `POST /query`, `/compare` | `false` | Per-hit SWAG scoring explanations |
+
+The Python library always returns full `RetrievalResult` objects (including `raw_text`) — trimming applies to the FastAPI layer only.
+
 ### Python API
 
 ```python
@@ -201,9 +223,8 @@ retrieval = RetrievalPipeline(
 
 result = retrieval.query("How does three-way matching work?")
 
-print("Baseline:", result.baseline_results[0].explanation)
-print("SWAG:", result.swag_results[0].explanation)
-print("Meta:", result.swag_meta)
+top = result.swag_results[0]
+print(f"{top.source_document}  final={top.final_score:.3f}")
 print("Answer:", result.answer)
 ```
 
@@ -219,10 +240,15 @@ print("Answer:", result.answer)
 | POST | `/compare` | Baseline vs SWAG side-by-side |
 
 ```bash
-# SWAG rerank (default)
+# SWAG rerank — scores + source only (default)
 curl -X POST http://localhost:8080/query \
   -H 'Content-Type: application/json' \
   -d '{"question": "How does three-way matching work?", "top_k": 5, "use_swag": true}'
+
+# Include full chunk text and SWAG explanations
+curl -X POST http://localhost:8080/compare \
+  -H 'Content-Type: application/json' \
+  -d '{"question": "How does three-way matching work?", "top_k": 5, "include_text": true, "include_explanation": true}'
 
 # Baseline only
 curl -X POST http://localhost:8080/query \
