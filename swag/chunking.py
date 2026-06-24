@@ -70,6 +70,35 @@ def chunk_text(
     return chunks
 
 
+def chunk_markdown_or_text(
+    text: str,
+    source_filename: str,
+    config: ChunkingConfig,
+    page_number: int | None = None,
+) -> list[DocumentChunk]:
+    """Chunk plain text or structure-split markdown with chunk_kind metadata."""
+    from swag.chunk_quality import classify_chunk_kind
+    from swag.structure import split_markdown_segments
+
+    is_markdown = source_filename.lower().endswith(".md") or text.lstrip().startswith("#")
+    if config.structural_split and is_markdown:
+        segments = split_markdown_segments(text)
+        all_chunks: list[DocumentChunk] = []
+        index = 0
+        for seg_text, seg_kind in segments:
+            for chunk in chunk_text(seg_text, source_filename, config, page_number):
+                chunk.metadata["chunk_kind"] = seg_kind
+                chunk.metadata["chunk_index"] = index
+                index += 1
+                all_chunks.append(chunk)
+        return all_chunks
+
+    chunks = chunk_text(text, source_filename, config, page_number)
+    for chunk in chunks:
+        chunk.metadata["chunk_kind"] = classify_chunk_kind(chunk.raw_text)
+    return chunks
+
+
 def chunk_pages(
     pages: list[tuple[int, str]],
     source_filename: str,
@@ -84,7 +113,7 @@ def chunk_pages(
         if not page_text:
             continue
 
-        page_chunks = chunk_text(page_text, source_filename, config, page_number=page_num)
+        page_chunks = chunk_markdown_or_text(page_text, source_filename, config, page_number=page_num)
         for chunk in page_chunks:
             chunk.chunk_id = generate_chunk_id(
                 source_filename, global_index, chunk.raw_text

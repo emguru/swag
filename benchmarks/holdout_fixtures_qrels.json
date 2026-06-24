@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "description": "Holdout fixture-only cases — portable SWAG rerank (no URLs, no CRAG).",
+  "collection": "research_docs",
+  "top_k": 8,
+  "pass_threshold": 0.8,
+  "pipeline": "swag_rerank",
+  "cases": [
+    {
+      "id": "holdout-ap-po-receipt",
+      "suite": "holdout",
+      "query": "goods receipt versus purchase order discrepancy",
+      "topic": "ap-procurement",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["ap-procurement/three-way-matching.md"],
+      "top1_must_contain": ["Goods receipt", "Discrepancies"]
+    },
+    {
+      "id": "holdout-cafeteria-allergen",
+      "suite": "holdout",
+      "query": "allergen labeling cafeteria self service",
+      "topic": "cafeteria-ops",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": [
+        "cafeteria-ops/food-safety-basics.md",
+        "cafeteria-ops/daily-menu.md"
+      ],
+      "top1_must_contain": ["Allergen", "allergen"]
+    },
+    {
+      "id": "holdout-recipe-flour",
+      "suite": "holdout",
+      "query": "buttermilk pancake flour ratio",
+      "topic": null,
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["adversarial/pancake-recipe.md"],
+      "top1_must_contain": ["buttermilk", "flour"]
+    }
+  ]
+}

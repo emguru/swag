@@ -36,13 +36,25 @@ class RetrievalPipeline:
         self.profile_generator = profile_generator or SWAGProfileGenerator()
         self.llm = llm_client or create_llm_client(self.config)
 
-    def _vector_search(self, query: str, top_k: int) -> list[SearchResult]:
+    def _vector_search(
+        self, query: str, top_k: int, topic: str | None = None
+    ) -> list[SearchResult]:
         query_embedding = self.embedder.embed_query(query)
-        return self.vector_store.search(query_embedding, top_k)
+        pool_k = max(top_k * 3, self.config.retrieval_candidates) if topic else top_k
+        results = self.vector_store.search(query_embedding, pool_k)
+        if topic:
+            results = [
+                r
+                for r in results
+                if str((r.chunk.metadata or {}).get("topic") or "") == topic
+            ]
+        return results[:top_k]
 
-    def retrieve_baseline(self, query: str, top_k: Optional[int] = None) -> list[RetrievalResult]:
+    def retrieve_baseline(
+        self, query: str, top_k: Optional[int] = None, topic: str | None = None
+    ) -> list[RetrievalResult]:
         k = top_k or self.config.top_k
-        results = self._vector_search(query, k)
+        results = self._vector_search(query, k, topic=topic)
         return [
             RetrievalResult(
                 chunk_id=r.chunk.chunk_id,
@@ -60,11 +72,11 @@ class RetrievalPipeline:
         ]
 
     def retrieve_with_swag(
-        self, query: str, top_k: Optional[int] = None
+        self, query: str, top_k: Optional[int] = None, topic: str | None = None
     ) -> tuple[list[RetrievalResult], dict]:
         k = top_k or self.config.top_k
         candidate_k = max(self.config.retrieval_candidates, k)
-        candidates_raw = self._vector_search(query, candidate_k)
+        candidates_raw = self._vector_search(query, candidate_k, topic=topic)
         hits = [chunk_to_hit(sr.chunk, sr.score) for sr in candidates_raw]
 
         reranked, swag_meta = rerank_hits_with_swag(

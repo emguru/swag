@@ -58,7 +58,7 @@ Ingest:  Documents → Chunk → SWAG profile (metadata) → Embed original text
 Query:   User query → Embed → Vector search (candidates) → SWAG rerank → Top-K → Answer
 ```
 
-**Rerank pipeline (v0.2):** ensure profiles → dedupe → score alignment → adaptive blend → noise gate → per-source diversity cap.
+**Rerank pipeline (v0.3):** gate check → ensure profiles → dedupe → score alignment → adaptive blend → noise gate → per-source diversity cap.
 
 ## Quick start
 
@@ -71,11 +71,13 @@ cd SWAG
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
-pip install -r requirements.txt
+pip install -e ".[dev]"
 cp .env.example .env
 
-python examples/demo.py
-uvicorn swag.app:app --reload --port 8080
+swag ingest                 # index ./data (recursive)
+swag query "How does three-way matching work?" --compare
+swag validate --seed --recreate --suite all
+swag serve --port 8080
 ```
 
 Without an API key, the framework uses local `sentence-transformers` embeddings, heuristic SWAG profiles, and `MockLLMClient` — sufficient for demo and testing.
@@ -87,6 +89,18 @@ docker compose up --build
 # http://localhost:8080
 ```
 
+## Product CLI (`swag`)
+
+| Command | Purpose |
+|---------|---------|
+| `swag ingest [path]` | Index files or directories (FAISS default) |
+| `swag query "…"` | Retrieve + optional answer |
+| `swag query "…" --compare` | Baseline vs SWAG side-by-side |
+| `swag validate --seed` | Run portable qrel proof suites |
+| `swag serve` | Start FastAPI on `:8080` |
+
+**v0.3 highlights:** structural markdown split (nav vs body), confidence-gated rerank, installable package (`pip install -e .`).
+
 ## Project structure
 
 ```
@@ -95,7 +109,9 @@ swag/
 ├── config.py           # Configuration (env vars, scoring, SWAG tuning)
 ├── settings.py         # Kube-compatible settings bridge
 ├── ingest.py           # Document ingestion pipeline
-├── chunking.py         # Configurable chunk size/overlap
+├── cli.py              # Product CLI (swag ingest|query|serve|validate)
+├── gating.py           # Skip rerank when baseline is decisive
+├── structure.py        # Markdown nav/body segmentation
 ├── chunk_quality.py    # Chunk-kind detection + multipliers
 ├── embeddings.py       # sentence-transformers / OpenAI embedders
 ├── vector_store.py     # FAISS (default) + Qdrant

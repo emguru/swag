@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "description": "SWAG rerank-only cases — portable across stacks (no CRAG/confidence/kube pipeline).",
+  "collection": "research_docs",
+  "top_k": 8,
+  "pass_threshold": 0.85,
+  "pipeline": "swag_rerank",
+  "cases": [
+    {
+      "id": "chrome-rag-body",
+      "suite": "chrome_trap",
+      "query": "what is retrieval augmented generation",
+      "topic": "validation-chrome",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["validation-chrome/langchain-rag-body.md"],
+      "forbidden_top1_seed_keys": ["validation-chrome/langchain-rag-chrome.md"],
+      "top1_must_contain": ["LLMs are trained on a large but fixed corpus"]
+    },
+    {
+      "id": "chrome-chunking",
+      "suite": "chrome_trap",
+      "query": "How does chunking affect RAG quality?",
+      "topic": "validation-chrome",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["validation-chrome/langchain-rag-body.md"],
+      "forbidden_top1_seed_keys": ["validation-chrome/langchain-rag-chrome.md"],
+      "top1_must_contain": ["Poor chunk boundaries", "overlapping chunks"]
+    },
+    {
+      "id": "ap-three-way-topic",
+      "suite": "domain_lane",
+      "query": "three-way matching purchase order",
+      "topic": "ap-procurement",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": [
+        "ap-procurement/three-way-matching.md",
+        "ap-procurement/invoice-processing.md"
+      ],
+      "top1_must_contain": ["purchase order", "Three-way matching", "three-way matching"]
+    },
+    {
+      "id": "ap-invoice-automation",
+      "suite": "domain_lane",
+      "query": "invoice processing automation workflow",
+      "topic": "ap-procurement",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["ap-procurement/invoice-processing.md"],
+      "top1_must_contain": ["Invoice processing automation", "OCR"]
+    },
+    {
+      "id": "cafeteria-food-safety",
+      "suite": "domain_lane",
+      "query": "food safety basics for cafeteria operations",
+      "topic": "cafeteria-ops",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["cafeteria-ops/food-safety-basics.md"],
+      "top1_must_contain": ["FDA food safety", "Temperature logs"]
+    },
+    {
+      "id": "python-readme-body",
+      "suite": "chrome_trap",
+      "query": "What is Python as a programming language?",
+      "topic": "validation-chrome",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["validation-chrome/python-readme-body.md"],
+      "forbidden_top1_seed_keys": ["validation-chrome/python-readme-chrome.md"],
+      "top1_must_contain": ["interpreted, high-level language"]
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "description": "Deterministic validation corpus: fixtures (stable seed_key) + optional public URLs.",
+  "collection": "research_docs",
+  "fixtures": [
+    {
+      "seed_key": "validation-chrome/langchain-rag-chrome.md",
+      "topic": "validation-chrome",
+      "path": "validation-chrome/langchain-rag-chrome.md"
+    },
+    {
+      "seed_key": "validation-chrome/langchain-rag-body.md",
+      "topic": "validation-chrome",
+      "path": "validation-chrome/langchain-rag-body.md"
+    },
+    {
+      "seed_key": "validation-chrome/python-readme-chrome.md",
+      "topic": "validation-chrome",
+      "path": "validation-chrome/python-readme-chrome.md"
+    },
+    {
+      "seed_key": "validation-chrome/python-readme-body.md",
+      "topic": "validation-chrome",
+      "path": "validation-chrome/python-readme-body.md"
+    },
+    {
+      "seed_key": "ap-procurement/three-way-matching.md",
+      "topic": "ap-procurement",
+      "path": "ap-procurement/three-way-matching.md"
+    },
+    {
+      "seed_key": "ap-procurement/invoice-processing.md",
+      "topic": "ap-procurement",
+      "path": "ap-procurement/invoice-processing.md"
+    },
+    {
+      "seed_key": "cafeteria-ops/food-safety-basics.md",
+      "topic": "cafeteria-ops",
+      "path": "cafeteria-ops/food-safety-basics.md"
+    },
+    {
+      "seed_key": "cafeteria-ops/daily-menu.md",
+      "topic": "cafeteria-ops",
+      "path": "cafeteria-ops/daily-menu.md"
+    },
+    {
+      "seed_key": "adversarial/pancake-recipe.md",
+      "topic": "adversarial",
+      "path": "adversarial/pancake-recipe.md"
+    },
+    {
+      "seed_key": "adversarial/shoe-catalog.md",
+      "topic": "adversarial",
+      "path": "adversarial/shoe-catalog.md"
+    }
+  ],
+  "eval_fixtures": [
+    {
+      "seed_key": "eval/langchain-rag-combined.md",
+      "topic": "eval-combined",
+      "path": "data/eval/langchain-rag-combined.md"
+    }
+  ],
+  "urls": [
+    {
+      "seed_key": "url:langchain-rag-readme",
+      "topic": "rag-demo",
+      "url": "https://raw.githubusercontent.com/langchain-ai/rag-from-scratch/main/README.md"
+    },
+    {
+      "seed_key": "url:microsoft-search-apps",
+      "topic": "rag-demo",
+      "url": "https://raw.githubusercontent.com/microsoft/generative-ai-for-beginners/main/08-building-search-applications/README.md"
+    },
+    {
+      "seed_key": "url:microsoft-prompt-engineering",
+      "topic": "rag-demo",
+      "url": "https://raw.githubusercontent.com/microsoft/generative-ai-for-beginners/main/04-prompt-engineering-fundamentals/README.md"
+    }
+  ]
+}

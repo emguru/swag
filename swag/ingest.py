@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from swag.chunking import chunk_pages, chunk_text
+from swag.chunking import chunk_markdown_or_text, chunk_pages, chunk_text
 from swag.config import SWAGConfig
 from swag.embeddings import BaseEmbedder, create_embedder
 from swag.schemas import IngestResult
@@ -102,7 +102,7 @@ class IngestionPipeline:
             )
         else:
             full_text = "\n\n".join(p[1] for p in pages)
-            chunks = chunk_text(full_text, source_filename, self.config.chunking)
+            chunks = chunk_markdown_or_text(full_text, source_filename, self.config.chunking)
 
         if not chunks:
             logger.warning("No chunks produced from %s", path.name)
@@ -116,6 +116,9 @@ class IngestionPipeline:
                     source_filename=chunk.source_filename,
                     page_number=chunk.page_number,
                 )
+                kind = chunk.metadata.get("chunk_kind")
+                if kind and chunk.swag_profile:
+                    chunk.swag_profile.chunk_kind = str(kind)
 
         # Generate embeddings from ORIGINAL chunk text only
         texts = [c.raw_text for c in chunks]
@@ -132,6 +135,60 @@ class IngestionPipeline:
             chunk_ids=[c.chunk_id for c in chunks],
         )
 
+    def ingest_fixture(
+        self,
+        path: Path,
+        *,
+        seed_key: str,
+        topic: str | None = None,
+        generate_swag: bool = True,
+    ) -> IngestResult:
+        """Ingest a validation fixture with stable seed_key for qrel eval."""
+        path = Path(path)
+        pages = load_document(path)
+        source_filename = f"validation://{seed_key}"
+
+        if pages and pages[0][0] is not None:
+            chunks = chunk_pages(
+                [(p[0], p[1]) for p in pages if p[0] is not None],
+                source_filename,
+                self.config.chunking,
+            )
+        else:
+            full_text = "\n\n".join(p[1] for p in pages)
+            chunks = chunk_markdown_or_text(full_text, source_filename, self.config.chunking)
+
+        for chunk in chunks:
+            chunk.metadata["seed_key"] = seed_key
+            if topic:
+                chunk.metadata["topic"] = topic
+
+        if not chunks:
+            return IngestResult(source_filename=source_filename, num_chunks=0, chunk_ids=[])
+
+        if generate_swag:
+            for chunk in chunks:
+                chunk.swag_profile = self.profile_generator.generate_chunk_profile(
+                    chunk_text=chunk.raw_text,
+                    source_filename=seed_key.split("/")[-1],
+                    page_number=chunk.page_number,
+                )
+                kind = chunk.metadata.get("chunk_kind")
+                if kind and chunk.swag_profile:
+                    chunk.swag_profile.chunk_kind = str(kind)
+
+        texts = [c.raw_text for c in chunks]
+        embeddings = self.embedder.embed(texts)
+        for chunk, emb in zip(chunks, embeddings):
+            chunk.embedding = emb
+
+        self.vector_store.add(chunks, embeddings)
+        return IngestResult(
+            source_filename=source_filename,
+            num_chunks=len(chunks),
+            chunk_ids=[c.chunk_id for c in chunks],
+        )
+
     def ingest_directory(
         self,
         directory: Optional[Path] = None,
@@ -142,13 +199,16 @@ class IngestionPipeline:
         data_dir = Path(data_dir)
         results: list[IngestResult] = []
 
-        for path in sorted(data_dir.iterdir()):
-            if path.is_file() and path.suffix.lower() in supported_extensions():
-                try:
-                    result = self.ingest_file(path, generate_swag=generate_swag)
-                    results.append(result)
-                except Exception as exc:
-                    logger.error("Failed to ingest %s: %s", path.name, exc)
+        for path in sorted(data_dir.rglob("*")):
+            if not path.is_file():
+                continue
+            if path.suffix.lower() not in supported_extensions():
+                continue
+            try:
+                result = self.ingest_file(path, generate_swag=generate_swag)
+                results.append(result)
+            except Exception as exc:
+                logger.error("Failed to ingest %s: %s", path.name, exc)
 
         return results
 

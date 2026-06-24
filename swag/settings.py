@@ -143,6 +143,10 @@ class SettingsBridge:
     def swag_fuzzy_min_token_len(self) -> int:
         return self._cfg.swag.swag_fuzzy_min_token_len
 
+    @property
+    def swag_gated_rerank(self) -> bool:
+        return self._cfg.swag.swag_gated_rerank
+
     def __setattr__(self, name: str, value) -> None:
         if name == "_cfg":
             object.__setattr__(self, name, value)

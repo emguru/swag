@@ -8,6 +8,8 @@ from swag.schemas import DocumentChunk, RetrievalResult
 def chunk_to_hit(chunk: DocumentChunk, vector_score: float) -> dict:
     doc_id = str(chunk.metadata.get("document_id") or chunk.source_filename)
     chunk_index = int(chunk.metadata.get("chunk_index", 0))
+    seed_key = chunk.metadata.get("seed_key")
+    chunk_kind = chunk.metadata.get("chunk_kind")
     return {
         "id": chunk.chunk_id,
         "document_id": doc_id,
@@ -17,6 +19,9 @@ def chunk_to_hit(chunk: DocumentChunk, vector_score: float) -> dict:
         "page": chunk.page_number,
         "score": vector_score,
         "swag_profile": chunk.swag_profile.model_dump() if chunk.swag_profile else None,
+        "seed_key": seed_key,
+        "topic": chunk.metadata.get("topic"),
+        "chunk_kind": chunk_kind,
         "_chunk": chunk,
     }
 

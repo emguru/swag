@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "description": "Hard rerank cases — combined markdown where structural split + SWAG must beat nav chrome.",
+  "collection": "research_docs",
+  "top_k": 8,
+  "pass_threshold": 1.0,
+  "pipeline": "swag_rerank",
+  "cases": [
+    {
+      "id": "hard-combined-rag-body",
+      "suite": "hard_rerank",
+      "query": "what is retrieval augmented generation",
+      "topic": "eval-combined",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["eval/langchain-rag-combined.md"],
+      "forbidden_top1_seed_keys": [],
+      "top1_must_contain": ["LLMs are trained on a large but fixed corpus"],
+      "forbidden_top1_contains": ["Navigation and badges only"]
+    },
+    {
+      "id": "hard-combined-chunking",
+      "suite": "hard_rerank",
+      "query": "How does chunking affect RAG quality?",
+      "topic": "eval-combined",
+      "mode": "swag",
+      "compare": true,
+      "relevant_seed_keys": ["eval/langchain-rag-combined.md"],
+      "top1_must_contain": ["Poor chunk boundaries", "overlapping chunks"]
+    }
+  ]
+}

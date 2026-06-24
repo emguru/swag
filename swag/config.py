@@ -15,6 +15,10 @@ load_dotenv(_PROJECT_ROOT / ".env")
 class ChunkingConfig(BaseModel):
     chunk_size: int = Field(default=512, description="Target chunk size in characters")
     chunk_overlap: int = Field(default=64, description="Overlap between consecutive chunks")
+    structural_split: bool = Field(
+        default=True,
+        description="Split markdown into nav/title/body segments before chunking",
+    )
 
 
 class ScoringConfig(BaseModel):
@@ -62,6 +66,7 @@ class SwagTuningConfig(BaseModel):
     swag_ungrounded_term_weight_multiplier: float = 0.35
     swag_grounding_min_token_ratio: float = 0.5
     swag_fuzzy_min_token_len: int = 4
+    swag_gated_rerank: bool = True
 
 
 class EmbeddingConfig(BaseModel):
@@ -155,6 +160,7 @@ class SWAGConfig(BaseModel):
                 os.getenv("SWAG_GROUNDING_MIN_TOKEN_RATIO", "0.5")
             ),
             swag_fuzzy_min_token_len=int(os.getenv("SWAG_FUZZY_MIN_TOKEN_LEN", "4")),
+            swag_gated_rerank=os.getenv("SWAG_GATED_RERANK", "true").lower() in {"1", "true", "yes"},
         )
 
         data_dir = Path(os.getenv("DATA_DIR", str(_PROJECT_ROOT / "data")))
@@ -167,6 +173,8 @@ class SWAGConfig(BaseModel):
             chunking=ChunkingConfig(
                 chunk_size=int(os.getenv("CHUNK_SIZE", "512")),
                 chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "64")),
+                structural_split=os.getenv("STRUCTURAL_SPLIT", "true").lower()
+                in {"1", "true", "yes"},
             ),
             scoring=scoring,
             swag=swag,

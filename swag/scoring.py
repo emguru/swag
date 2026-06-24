@@ -193,6 +193,12 @@ def score_swag_alignment(
                 )
 
     for q_neg in query_negatives:
+        lowered_chunk = chunk_text.lower()
+        if q_neg.lower() in lowered_chunk:
+            negative_hits += 1
+            explanations.append(
+                f"Penalty: query negative context '{q_neg}' appears in chunk text"
+            )
         for c_term, entries in chunk_term_map.items():
             if not negative_penalty_match(q_neg, c_term):
                 continue

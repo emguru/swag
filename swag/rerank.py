@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from swag.gating import should_rerank_with_swag
 from swag.settings import settings
 from swag.chunk_quality import chunk_kind_from_profile, chunk_quality_multiplier
 from swag.heuristic import is_evaluative_query
@@ -46,7 +47,27 @@ def rerank_hits_with_swag(
             "profiles_cached": 0,
             "profiling_ran": False,
             "query_domain": None,
+            "gated": settings.swag_gated_rerank,
+            "gate_skipped": False,
+            "gate_reason": "no_candidates",
         }
+
+    if settings.swag_gated_rerank:
+        gate, gate_reason = should_rerank_with_swag(hits, query=query)
+        if not gate:
+            skipped = hits[:limit]
+            return skipped, {
+                "enabled": True,
+                "candidates": len(hits),
+                "profiles_available": 0,
+                "profiles_generated": 0,
+                "profiles_cached": 0,
+                "profiling_ran": False,
+                "query_domain": None,
+                "gated": True,
+                "gate_skipped": True,
+                "gate_reason": gate_reason,
+            }
 
     hits, profile_meta = ensure_swag_profiles(
         hits, collection=collection, vector_store=vector_store
@@ -145,6 +166,9 @@ def rerank_hits_with_swag(
         "noise_dropped": post_meta.get("noise_dropped", 0),
         "noise_backfilled": post_meta.get("noise_backfilled", 0),
         "diversity_skipped": post_meta.get("diversity_skipped", 0),
+        "gated": settings.swag_gated_rerank,
+        "gate_skipped": False,
+        "gate_reason": "rerank_applied",
     }
     return reranked, meta
 

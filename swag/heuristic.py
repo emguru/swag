@@ -173,6 +173,19 @@ def heuristic_query_profile(query: str) -> SWAGProfile:
     primary = [query] if query else []
     domain = _guess_domain(query)
     negatives = _off_topic_negative_contexts(domain)
+    lower = query.lower()
+    if any(token in lower for token in ("basic", "basics", "fundamental", "introduction", "overview")):
+        negatives.extend(
+            [
+                "incident reporting",
+                "adverse event",
+                "openfda",
+                "enforcement action",
+                "recall notice",
+            ]
+        )
+    if any(token in lower for token in ("allergen", "labeling", "menu", "self service")):
+        negatives.extend(["incident reporting", "openfda", "adverse event"])
     evaluative = is_evaluative_query(query)
 
     weighted: list[WeightedSemanticTerm] = []
