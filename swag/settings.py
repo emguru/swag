@@ -64,6 +64,10 @@ class SettingsBridge:
         return self._cfg.swag.swag_noise_backfill_ratio
 
     @property
+    def swag_noise_backfill_enabled(self) -> bool:
+        return self._cfg.swag.swag_noise_backfill_enabled
+
+    @property
     def swag_evaluative_blend_boost(self) -> float:
         return self._cfg.swag.swag_evaluative_blend_boost
 

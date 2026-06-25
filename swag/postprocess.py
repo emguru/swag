@@ -173,9 +173,11 @@ def finalize_swag_ranking(scored: list[dict], *, limit: int) -> tuple[list[dict]
 
     gated = [h for h in scored if passes_noise_gate(h, top_vector=top_vector)]
     noise_dropped = len(scored) - len(gated)
-    gated, noise_backfilled = backfill_gated_hits(
-        scored, gated, top_vector=top_vector, limit=limit
-    )
+    noise_backfilled = 0
+    if settings.swag_noise_backfill_enabled:
+        gated, noise_backfilled = backfill_gated_hits(
+            scored, gated, top_vector=top_vector, limit=limit
+        )
 
     diversified, diversity_skipped = apply_source_diversity(gated, limit=limit)
     reranked = diversified[:limit]

@@ -23,7 +23,10 @@ def test_collapse_near_duplicate_drops_similar_text():
     assert len(kept) == 2
 
 
-def test_source_diversity_caps_per_document():
+def test_source_diversity_caps_per_document(monkeypatch):
+    from swag.settings import settings as swag_settings
+
+    monkeypatch.setattr(swag_settings, "swag_max_chunks_per_source", 3)
     hits = [
         {"document_id": "d1", "score": 0.9 - i * 0.01, "source": f"s/doc{i}"}
         for i in range(5)
@@ -33,8 +36,13 @@ def test_source_diversity_caps_per_document():
     assert skipped >= 2
 
 
-def test_backfill_adds_hits_when_strict_gate_is_sparse():
+def test_backfill_adds_hits_when_strict_gate_is_sparse(monkeypatch):
     from swag.postprocess import finalize_swag_ranking
+    from swag.settings import settings as swag_settings
+
+    monkeypatch.setattr(swag_settings, "swag_noise_backfill_enabled", True)
+    monkeypatch.setattr(swag_settings, "swag_noise_relative_vector_ratio", 0.65)
+    monkeypatch.setattr(swag_settings, "swag_max_chunks_per_source", 5)
 
     scored = [
         {"vector_score": 0.6, "swag_score": 0.2, "score": 0.5, "chunk_kind": "body", "text": "a" * 100},

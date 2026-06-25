@@ -2,7 +2,7 @@
 
 A Python framework that embeds a **SWAG retrieval enhancement layer** into a traditional RAG pipeline. SWAG improves retrieval ranking by scoring whether a user query aligns with the **contextual semantic weight profile** of each chunk — without modifying the original document text.
 
-**v0.2** ports the production-hardened reranker from `kube_rag_langg` (noise gating, chunk-kind multipliers, heuristic profiles, grounding, adaptive blend). Deploy **locally, on-prem, or cloud** — see [docs/DEPLOY.md](docs/DEPLOY.md).
+**v0.3** — installable product with structural ingest split, confidence-gated rerank, and **strict noise filtering** (no sibling padding, no backfill-to-top-K). Ports the production reranker from `kube_rag_langg`. Deploy **locally, on-prem, or cloud** — see [docs/DEPLOY.md](docs/DEPLOY.md).
 
 **Docs:** [Build & Usage](docs/BUILD_AND_USAGE.md) · [Architecture diagram](docs/architecture-diagram.html) · [Deploy modes](docs/DEPLOY.md)
 
@@ -99,7 +99,7 @@ docker compose up --build
 | `swag validate --seed` | Run portable qrel proof suites |
 | `swag serve` | Start FastAPI on `:8080` |
 
-**v0.3 highlights:** structural markdown split (nav vs body), confidence-gated rerank, installable package (`pip install -e .`).
+**v0.3 highlights:** structural markdown split (nav vs body), confidence-gated rerank, strict noise filter (1 chunk/doc, no backfill padding), `pip install -e .`, `swag` CLI.
 
 ## Project structure
 

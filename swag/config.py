@@ -44,15 +44,16 @@ class SwagTuningConfig(BaseModel):
     swag_grader_model: str = "gpt-4o-mini"
     swag_min_score_threshold: float = 0.08
     swag_noise_vector_margin: float = 0.04
-    swag_noise_relative_vector_ratio: float = 0.65
+    swag_noise_relative_vector_ratio: float = 0.78
     swag_noise_backfill_ratio: float = 0.58
+    swag_noise_backfill_enabled: bool = False
     swag_evaluative_blend_boost: float = 0.15
     swag_evaluative_title_penalty: float = 0.65
     swag_chunk_title_multiplier: float = 0.40
     swag_chunk_nav_multiplier: float = 0.30
     swag_chunk_boilerplate_multiplier: float = 0.02
     swag_intent_category_boost: float = 1.25
-    swag_max_chunks_per_source: int = 3
+    swag_max_chunks_per_source: int = 1
     swag_deduplicate_similarity: float = 0.92
     swag_adaptive_blend: bool = True
     swag_adaptive_vector_epsilon: float = 0.03
@@ -129,9 +130,11 @@ class SWAGConfig(BaseModel):
             swag_min_score_threshold=float(os.getenv("SWAG_MIN_SCORE_THRESHOLD", "0.08")),
             swag_noise_vector_margin=float(os.getenv("SWAG_NOISE_VECTOR_MARGIN", "0.04")),
             swag_noise_relative_vector_ratio=float(
-                os.getenv("SWAG_NOISE_RELATIVE_VECTOR_RATIO", "0.65")
+                os.getenv("SWAG_NOISE_RELATIVE_VECTOR_RATIO", "0.78")
             ),
             swag_noise_backfill_ratio=float(os.getenv("SWAG_NOISE_BACKFILL_RATIO", "0.58")),
+            swag_noise_backfill_enabled=os.getenv("SWAG_NOISE_BACKFILL_ENABLED", "false").lower()
+            in {"1", "true", "yes"},
             swag_evaluative_blend_boost=float(os.getenv("SWAG_EVALUATIVE_BLEND_BOOST", "0.15")),
             swag_evaluative_title_penalty=float(os.getenv("SWAG_EVALUATIVE_TITLE_PENALTY", "0.65")),
             swag_chunk_title_multiplier=float(os.getenv("SWAG_CHUNK_TITLE_MULTIPLIER", "0.40")),
@@ -140,7 +143,7 @@ class SWAGConfig(BaseModel):
                 os.getenv("SWAG_CHUNK_BOILERPLATE_MULTIPLIER", "0.02")
             ),
             swag_intent_category_boost=float(os.getenv("SWAG_INTENT_CATEGORY_BOOST", "1.25")),
-            swag_max_chunks_per_source=int(os.getenv("SWAG_MAX_CHUNKS_PER_SOURCE", "3")),
+            swag_max_chunks_per_source=int(os.getenv("SWAG_MAX_CHUNKS_PER_SOURCE", "1")),
             swag_deduplicate_similarity=float(os.getenv("SWAG_DEDUPLICATE_SIMILARITY", "0.92")),
             swag_adaptive_blend=os.getenv("SWAG_ADAPTIVE_BLEND", "true").lower()
             in {"1", "true", "yes"},
