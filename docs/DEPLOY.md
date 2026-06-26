@@ -135,12 +135,13 @@ print(f"{result.swag_results[0].source_document}  final={result.swag_results[0].
 
 ## Sync with kube_rag_langg
 
-The reranking engine in `swag/` is ported from `kube_rag_langg/ingestion/src/ingestion/swag/`. Kube adds AWS-specific adapters (Bedrock, EKS, CRAG grading, sibling expansion); this repo is the portable core.
+The reranking engine in `swag/` tracks `kube_rag_langg/ingestion/src/ingestion/swag/` (logic equivalent; import paths differ). **v0.3.2** (2026-06) — verified in sync with kube `077eecd` SWAG core; kube-only changes since v0.3.1 are CRAG partial-keep, showcase compare UX, and site copy — not ported here.
 
 | Feature | SWAG (this repo) | kube_rag_langg |
 |---------|------------------|----------------|
-| SWAG rerank | ✓ | ✓ (vendored copy) |
-| CRAG grading | — | ✓ Haiku grader |
-| Deploy | Local / Docker / any cloud | AWS EKS + CDK |
+| SWAG rerank | ✓ v0.3.2 | ✓ (vendored copy) |
+| `swag query --compare` | ✓ baseline vs SWAG | ✓ Search tab (4 modes + purge panel) |
+| CRAG grading | — | ✓ Haiku grader (after SWAG) |
+| Deploy | Local / Docker / any cloud | AWS EKS — [langrag.automatico.llc](https://langrag.automatico.llc) |
 
-Kube guide: `kube_rag_langg/docs/BUILD_AND_USAGE.md`
+Kube guide: `kube_rag_langg/docs/BUILD_AND_USAGE.md` · live relevance compare: Search tab on langrag.
