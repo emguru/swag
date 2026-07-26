@@ -1,16 +1,32 @@
 """Tests for confidence-gated SWAG rerank."""
 
 from swag.gating import should_rerank_with_swag
+from swag.settings import settings
 
 
-def test_gate_skips_clear_body_winner():
+def test_gating_never_skips_multi_candidate_pool():
     hits = [
-        {"score": 0.82, "text": "Body paragraph with several sentences. It explains RAG in detail.", "chunk_kind": "body"},
+        {
+            "score": 0.82,
+            "text": "Body paragraph with several sentences. It explains RAG in detail.",
+            "chunk_kind": "body",
+        },
         {"score": 0.55, "text": "Nav links only", "chunk_kind": "nav"},
     ]
     should, reason = should_rerank_with_swag(hits, query="what is rag")
-    assert should is False
-    assert reason == "clear_body_winner"
+    assert should is True
+    assert reason == "multi_candidate_filter"
+
+
+def test_gating_still_reranks_when_top_is_misclassified_body(monkeypatch):
+    monkeypatch.setattr(settings, "swag_adaptive_vector_epsilon", 0.03)
+    hits = [
+        {"text": "# Title only", "score": 0.55, "chunk_kind": "body"},
+        {"text": "Real answer about RAG pipelines and chunking.", "score": 0.50},
+    ]
+    should, reason = should_rerank_with_swag(hits, query="how does rag work")
+    assert should is True
+    assert "multi_candidate" in reason
 
 
 def test_gate_reranks_nav_top1():
@@ -31,3 +47,16 @@ def test_gate_reranks_ambiguous_margin():
     should, reason = should_rerank_with_swag(hits, query="chunking quality")
     assert should is True
     assert reason == "vector_margin_ambiguous"
+
+
+def test_gate_skips_single_body_candidate():
+    hits = [
+        {
+            "score": 0.82,
+            "text": "Body paragraph with several sentences. It explains RAG in detail.",
+            "chunk_kind": "body",
+        },
+    ]
+    should, reason = should_rerank_with_swag(hits, query="what is rag")
+    assert should is False
+    assert reason == "single_body_candidate"

@@ -1,6 +1,6 @@
 """SWAG — Semantic Weighted Augmented Generation for RAG."""
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 from swag.config import SWAGConfig, config
 from swag.ingest import IngestionPipeline

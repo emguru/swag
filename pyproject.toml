@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swag-rag"
-version = "0.3.2"
+version = "0.3.3"
 description = "Semantic Weighted Augmented Generation — retrieval reranking for RAG"
 readme = "README.md"
 requires-python = ">=3.11"

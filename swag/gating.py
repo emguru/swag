@@ -1,4 +1,4 @@
-"""Confidence-gated SWAG rerank — skip when baseline vector search is already decisive."""
+"""Confidence-gated SWAG rerank — always filter multi-candidate pools."""
 
 from __future__ import annotations
 
@@ -9,10 +9,10 @@ from swag.settings import settings
 
 def should_rerank_with_swag(hits: list[dict], *, query: str) -> tuple[bool, str]:
     """
-    Decide whether SWAG rerank is worth the cost for this candidate pool.
+    Decide whether SWAG rerank + noise filter should run for this candidate pool.
 
-    Rerank when top-1 is low-quality chrome or vector scores are ambiguous.
-    Skip when a body chunk clearly leads the pool.
+    Always rerank when there are 2+ candidates so chrome/nav cannot skip the filter
+    path via a misclassified "clear body winner". Single body candidates still skip.
     """
     del query  # reserved for future query-shape gates (definitional vs navigational)
     if not hits:
@@ -35,8 +35,8 @@ def should_rerank_with_swag(hits: list[dict], *, query: str) -> tuple[bool, str]
     if margin <= epsilon:
         return True, "vector_margin_ambiguous"
 
-    if top_kind == "body" and margin > epsilon:
-        return False, "clear_body_winner"
+    if len(hits) >= 2:
+        return True, "multi_candidate_filter"
 
     return True, "default_rerank"
 

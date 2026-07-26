@@ -9,8 +9,23 @@ from swag.schemas import SWAGProfile
 
 _HTML_MARKERS = ("<!doctype", "<html", "<head", "<meta", "<script")
 _LINK_MARKERS = ("](http", "![", "http://", "https://")
+_BADGE_MARKERS = ("img.shields.io", "shields.io", "badge/")
 _HEADER_RE = re.compile(r"^#{1,4}\s+\S")
 _SENTENCE_RE = re.compile(r"[.!?]\s+\S")
+_ANCHOR_BULLET_RE = re.compile(r"[-*]\s*\[[^\]]+\]\(#")
+_STRIP_LINKS_RE = re.compile(r"!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)")
+
+
+def _substantive_sentence_count(cleaned: str) -> int:
+    """Count sentences that look like explanatory prose, not nav labels."""
+    plain = _STRIP_LINKS_RE.sub(" ", cleaned)
+    parts = re.split(r"(?<=[.!?])\s+", plain)
+    substantive = 0
+    for part in parts:
+        words = [w for w in part.split() if w]
+        if len(words) >= 12 or len(part) >= 80:
+            substantive += 1
+    return substantive
 
 
 def classify_chunk_kind(text: str) -> str:
@@ -24,8 +39,17 @@ def classify_chunk_kind(text: str) -> str:
         return "boilerplate"
 
     link_signals = sum(cleaned.count(marker) for marker in _LINK_MARKERS)
+    anchor_bullets = len(_ANCHOR_BULLET_RE.findall(cleaned))
     sentence_count = len(_SENTENCE_RE.findall(cleaned)) + (1 if cleaned.endswith((".", "!", "?")) else 0)
-    if link_signals >= 2 and len(cleaned) < 260 and sentence_count <= 1:
+    substantive_sentences = _substantive_sentence_count(cleaned)
+
+    if "table of contents" in lower or anchor_bullets >= 2:
+        return "nav"
+    if any(marker in lower for marker in _BADGE_MARKERS) and link_signals >= 2:
+        return "nav"
+    if link_signals >= 3 and len(cleaned) < 450 and substantive_sentences <= 1:
+        return "nav"
+    if link_signals >= 2 and len(cleaned) < 320 and sentence_count <= 1:
         return "nav"
 
     if _HEADER_RE.match(cleaned) and len(cleaned) < 160:

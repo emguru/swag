@@ -2,7 +2,7 @@
 
 A Python framework that embeds a **SWAG retrieval enhancement layer** into a traditional RAG pipeline. SWAG improves retrieval ranking by scoring whether a user query aligns with the **contextual semantic weight profile** of each chunk — without modifying the original document text.
 
-**v0.3.2** — aligned with kube `langrag` SWAG core (v0.3.1 strict filtering). Documents honest side-by-side compare: vector-only junk vs SWAG rerank vs full SWAG→CRAG in the [reference showcase](https://langrag.automatico.llc). **v0.3** adds structural ingest split, confidence-gated rerank, and installable CLI. Ports the production reranker from `kube_rag_langg`. Deploy **locally, on-prem, or cloud** — see [docs/DEPLOY.md](docs/DEPLOY.md).
+**v0.3.3** — always-on multi-candidate filtering (no `clear_body_winner` skip), README chrome classified as nav (badges/TOC), nav/title hard noise gate + chrome floor, noise ratio default **0.62**. Synced with kube `0beb356`. **v0.3.2** — relevance-compare narrative. **v0.3** — structural ingest split, gated rerank, installable CLI. Ports the production reranker from `kube_rag_langg`. Deploy **locally, on-prem, or cloud** — see [docs/DEPLOY.md](docs/DEPLOY.md).
 
 **Docs:** [Build & Usage](docs/BUILD_AND_USAGE.md) · [Architecture diagram](docs/architecture-diagram.html) · [Deploy modes](docs/DEPLOY.md)
 
@@ -114,7 +114,7 @@ docker compose up --build
 | `swag validate --seed` | Run portable qrel proof suites |
 | `swag serve` | Start FastAPI on `:8080` |
 
-**v0.3.2 highlights:** relevance-compare narrative aligned with kube showcase; rerank core synced with `ingestion/swag` in langrag. **v0.3:** structural markdown split (nav vs body), confidence-gated rerank, strict noise filter (1 chunk/doc, no backfill padding), `pip install -e .`, `swag` CLI.
+**v0.3.3 highlights:** always-on filter on multi-candidate pools; README chrome → nav; nav/title hard gate; noise ratio 0.62. **v0.3.2:** relevance-compare narrative aligned with kube showcase. **v0.3:** structural markdown split (nav vs body), confidence-gated rerank, strict noise filter (1 chunk/doc, no backfill padding), `pip install -e .`, `swag` CLI.
 
 ## Project structure
 
@@ -125,7 +125,7 @@ swag/
 ├── settings.py         # Kube-compatible settings bridge
 ├── ingest.py           # Document ingestion pipeline
 ├── cli.py              # Product CLI (swag ingest|query|serve|validate)
-├── gating.py           # Skip rerank when baseline is decisive
+├── gating.py           # Always-on multi-candidate filter (+ optional gate skip)
 ├── structure.py        # Markdown nav/body segmentation
 ├── chunk_quality.py    # Chunk-kind detection + multipliers
 ├── embeddings.py       # sentence-transformers / OpenAI embedders

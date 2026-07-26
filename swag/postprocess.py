@@ -84,11 +84,21 @@ def passes_noise_gate(
     relative_ratio: float | None = None,
 ) -> bool:
     """Drop weak semantic fits unless vector score is near the leader."""
+    kind = str(hit.get("chunk_kind") or "body")
+    if kind in {"boilerplate", "empty"}:
+        return False
+
     floor = settings.swag_min_score_threshold
     if floor <= 0:
         return True
     swag = float(hit.get("swag_score") or 0.0)
     vector = float(hit.get("vector_score") or hit.get("score") or 0.0)
+
+    if kind in {"nav", "title"}:
+        chrome_floor = floor * 1.5
+        if swag < chrome_floor:
+            return False
+
     if swag >= floor:
         return True
     if top_vector <= 0:
@@ -105,7 +115,7 @@ def passes_noise_gate(
 
 
 def _hard_noise_kind(hit: dict) -> bool:
-    return str(hit.get("chunk_kind") or "body") in {"boilerplate", "empty"}
+    return str(hit.get("chunk_kind") or "body") in {"boilerplate", "empty", "nav", "title"}
 
 
 def backfill_gated_hits(

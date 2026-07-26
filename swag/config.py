@@ -44,7 +44,7 @@ class SwagTuningConfig(BaseModel):
     swag_grader_model: str = "gpt-4o-mini"
     swag_min_score_threshold: float = 0.08
     swag_noise_vector_margin: float = 0.04
-    swag_noise_relative_vector_ratio: float = 0.78
+    swag_noise_relative_vector_ratio: float = 0.62
     swag_noise_backfill_ratio: float = 0.58
     swag_noise_backfill_enabled: bool = False
     swag_evaluative_blend_boost: float = 0.15
@@ -67,7 +67,7 @@ class SwagTuningConfig(BaseModel):
     swag_ungrounded_term_weight_multiplier: float = 0.35
     swag_grounding_min_token_ratio: float = 0.5
     swag_fuzzy_min_token_len: int = 4
-    swag_gated_rerank: bool = True
+    swag_gated_rerank: bool = False
 
 
 class EmbeddingConfig(BaseModel):
@@ -130,7 +130,7 @@ class SWAGConfig(BaseModel):
             swag_min_score_threshold=float(os.getenv("SWAG_MIN_SCORE_THRESHOLD", "0.08")),
             swag_noise_vector_margin=float(os.getenv("SWAG_NOISE_VECTOR_MARGIN", "0.04")),
             swag_noise_relative_vector_ratio=float(
-                os.getenv("SWAG_NOISE_RELATIVE_VECTOR_RATIO", "0.78")
+                os.getenv("SWAG_NOISE_RELATIVE_VECTOR_RATIO", "0.62")
             ),
             swag_noise_backfill_ratio=float(os.getenv("SWAG_NOISE_BACKFILL_RATIO", "0.58")),
             swag_noise_backfill_enabled=os.getenv("SWAG_NOISE_BACKFILL_ENABLED", "false").lower()
@@ -163,7 +163,8 @@ class SWAGConfig(BaseModel):
                 os.getenv("SWAG_GROUNDING_MIN_TOKEN_RATIO", "0.5")
             ),
             swag_fuzzy_min_token_len=int(os.getenv("SWAG_FUZZY_MIN_TOKEN_LEN", "4")),
-            swag_gated_rerank=os.getenv("SWAG_GATED_RERANK", "true").lower() in {"1", "true", "yes"},
+            swag_gated_rerank=os.getenv("SWAG_GATED_RERANK", "false").lower()
+            in {"1", "true", "yes"},
         )
 
         data_dir = Path(os.getenv("DATA_DIR", str(_PROJECT_ROOT / "data")))

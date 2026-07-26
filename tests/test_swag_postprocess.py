@@ -59,4 +59,20 @@ def test_backfill_adds_hits_when_strict_gate_is_sparse(monkeypatch):
 
 def test_noise_gate_keeps_near_top_vector():
     assert passes_noise_gate({"swag_score": 0.02, "vector_score": 0.59}, top_vector=0.60)
-    assert not passes_noise_gate({"swag_score": 0.02, "vector_score": 0.38}, top_vector=0.60)
+    assert not passes_noise_gate({"swag_score": 0.02, "vector_score": 0.30}, top_vector=0.60)
+
+
+def test_noise_gate_drops_chrome_kinds_without_swag_floor():
+    top = 0.505
+    assert not passes_noise_gate(
+        {"swag_score": 0.0, "vector_score": 0.50, "chunk_kind": "nav"},
+        top_vector=top,
+    )
+    assert not passes_noise_gate(
+        {"swag_score": 0.0, "vector_score": 0.50, "chunk_kind": "title"},
+        top_vector=top,
+    )
+    assert not passes_noise_gate(
+        {"swag_score": 0.0, "vector_score": 0.50, "chunk_kind": "boilerplate"},
+        top_vector=top,
+    )
