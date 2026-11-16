@@ -133,15 +133,6 @@ print(f"{result.swag_results[0].source_document}  final={result.swag_results[0].
 
 ---
 
-## Sync with kube_rag_langg
+## Related: langrag
 
-The reranking engine in `swag/` tracks `kube_rag_langg/ingestion/src/ingestion/swag/` (logic equivalent; import paths differ). **v0.3.3** (2026-07) — synced with kube `0beb356`: always-on multi-candidate filter, README chrome→nav, nav/title hard noise gate, noise ratio 0.62, gated rerank off by default. Kube-only: CRAG grading, eval harness, EKS showcase UI.
-
-| Feature | SWAG (this repo) | kube_rag_langg |
-|---------|------------------|----------------|
-| SWAG rerank | ✓ v0.3.3 | ✓ (vendored copy) |
-| `swag query --compare` | ✓ baseline vs SWAG | ✓ Search tab (4 modes + purge panel) |
-| CRAG grading | — | ✓ Haiku grader (after SWAG) |
-| Deploy | Local / Docker / any cloud | AWS EKS — [langrag.automatico.llc](https://langrag.automatico.llc) |
-
-Kube guide: `kube_rag_langg/docs/BUILD_AND_USAGE.md` · live relevance compare: Search tab on langrag.
+This repo is the **portable SWAG core**. The [langrag](https://github.com/emguru/langrag) reference stack adds AWS ingest, hybrid search, and an eval harness around the same retrieval ideas.

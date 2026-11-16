@@ -2,7 +2,7 @@
 
 A Python framework that embeds a **SWAG retrieval enhancement layer** into a traditional RAG pipeline. SWAG improves retrieval ranking by scoring whether a user query aligns with the **contextual semantic weight profile** of each chunk — without modifying the original document text.
 
-**v0.3.3** — always-on multi-candidate filtering (no `clear_body_winner` skip), README chrome classified as nav (badges/TOC), nav/title hard noise gate + chrome floor, noise ratio default **0.62**. Synced with kube `0beb356`. **v0.3.2** — relevance-compare narrative. **v0.3** — structural ingest split, gated rerank, installable CLI. Ports the production reranker from `kube_rag_langg`. Deploy **locally, on-prem, or cloud** — see [docs/DEPLOY.md](docs/DEPLOY.md).
+**v0.3.3** — always-on multi-candidate filtering, README chrome classified as nav, nav/title noise gate, noise ratio default **0.62**. Installable CLI. Deploy **locally, on-prem, or cloud** — see [docs/DEPLOY.md](docs/DEPLOY.md).
 
 **Docs:** [Build & Usage](docs/BUILD_AND_USAGE.md) · [Architecture diagram](docs/architecture-diagram.html) · [Deploy modes](docs/DEPLOY.md)
 
@@ -47,7 +47,7 @@ CRAG:  Retrieve → Evaluate confidence → Correct if low → Generate
 SWAG:  Retrieve → SWAG rerank → Generate (original chunks unchanged)
 ```
 
-In combined deployments (e.g. [kube_rag_langg](https://github.com/emguru/langrag) / [langrag.automatico.llc](https://langrag.automatico.llc)), SWAG sits **before** the CRAG confidence evaluator — better initial ranking means fewer chunks sent to Haiku grading and fewer false passes from mis-ranked chrome.
+In combined deployments (see [langrag](https://github.com/emguru/langrag)), SWAG can sit **before** a corrective-RAG confidence step — better initial ranking means fewer junk chunks graded and fewer false passes from page chrome.
 
 ## Relevance proof — what compare mode shows (honest)
 
@@ -57,12 +57,12 @@ This is not a vanity metric. It is how we validate that retrieval is **useful**,
 |------|----------------|
 | **Vector only** | Classic RAG — embedding similarity. README chrome, nav, and wrong-domain neighbors often rank high. |
 | **SWAG** (`swag query --compare`) | Rerank + noise filter — body promoted, duplicates dropped, one chunk per document by default. |
-| **CRAG alone** (kube) | Grades whatever vector returned — junk already in top-K can still pass as ambiguous. |
-| **SWAG → CRAG** (kube default) | Clean candidates first (≤5), then grade. Empty results mean the corpus could not support a confident answer. |
+| **CRAG alone** | Grades whatever vector returned — junk already in top-K can still pass as ambiguous. |
+| **SWAG → CRAG** | Clean candidates first (≤5), then grade. Empty results mean the corpus could not support a confident answer. |
 
-Portable SWAG proves the **rerank layer** via qrel suites (`swag validate --seed`). Full SWAG→CRAG proof runs on the kube reference build — same rerank core, plus Haiku grading and the Search tab compare panel.
+Portable SWAG proves the **rerank layer** via qrel suites (`swag validate --seed`).
 
-**Try it:** `swag query "how does rag work" --compare` on lesson HTML, or the mixed corpus at langrag with compare enabled.
+**Try it:** `swag query "how does rag work" --compare` on lesson HTML.
 
 ## Architecture
 

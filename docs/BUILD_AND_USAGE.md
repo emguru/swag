@@ -20,7 +20,7 @@ Deploy, operate, and demo **SWAG** — the portable Semantic Weighted Augmented 
 10. [Tests and validation](#tests-and-validation)
 11. [Extending backends](#extending-backends)
 12. [Troubleshooting](#troubleshooting)
-13. [Sync with kube_rag_langg](#sync-with-kube_rag_langg)
+13. [Related: langrag](#related-langrag)
 
 ---
 
@@ -32,7 +32,7 @@ Deploy, operate, and demo **SWAG** — the portable Semantic Weighted Augmented 
 | Embeddings | sentence-transformers (local) or OpenAI |
 | Vector store | FAISS (default, disk) or Qdrant (on-prem / cloud) |
 | SWAG profiles | `heuristic` (default, $0) or `llm` (OpenAI / Ollama) |
-| Reranker | Production-hardened engine ported from `kube_rag_langg` |
+| Reranker | Production-hardened engine (noise gating, profile alignment, diversity cap) |
 | Answers | OpenAI, Ollama, or Mock LLM fallback |
 
 **SWAG** is a retrieval enhancement layer — not a replacement for RAG or CRAG. It stores semantic metadata **separately** from chunk text and reranks vector search candidates using weighted profile alignment, noise gating, chunk-kind multipliers, and grounding checks.
@@ -384,18 +384,9 @@ OLLAMA_BASE_URL=http://localhost:11434
 
 ---
 
-## Sync with kube_rag_langg
+## Related: langrag
 
-The reranking engine in `swag/` is ported from `kube_rag_langg/ingestion/src/ingestion/swag/`. Kube adds AWS-specific adapters (Bedrock, EKS, CRAG grading, sibling expansion); this repo is the **portable core**.
-
-| Concern | SWAG (this repo) | kube_rag_langg |
-|---------|------------------|----------------|
-| Deploy target | Local / Docker / any cloud VM | AWS EKS + CDK |
-| Vector store | FAISS or Qdrant | Qdrant on EBS |
-| CRAG grading | Not included | Haiku grader + web fallback |
-| SWAG profiles | heuristic or llm | heuristic default |
-
-Kube build guide: `kube_rag_langg/docs/BUILD_AND_USAGE.md`
+This repo is the portable SWAG core. [langrag](https://github.com/emguru/langrag) is the AWS reference stack (ingest, hybrid search, eval).
 
 ---
 
